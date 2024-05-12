@@ -73,7 +73,7 @@ void initialize_password()
   {
     Serial.print(password[i]); Serial.print(" ");
   }  
-  return;
+  Serial.println();
 }
 
 void loop() {
@@ -104,7 +104,7 @@ void loop() {
       counter=0;
     }
     // if not touched more than 5 seconds
-    if(millis()-last_time >= 5000 && counter) // and also end count
+    if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
     {
         last_time = millis();
         counter=0;
