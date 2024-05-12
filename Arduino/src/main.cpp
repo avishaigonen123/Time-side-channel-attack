@@ -71,9 +71,14 @@ void initialize_password()
   Serial.print("new password set:");
   for (int i = 0; i < PASS_SIZE; i++)
     Serial.print(password[i]); Serial.print(" ");
+<<<<<<< HEAD:Arduino/src/main.cpp
   
   Serial.print("\n");
   return;
+=======
+  }  
+  Serial.println();
+>>>>>>> 32f47880bffa04c924d5a7020f4c4533c4ff09bd:src/main.cpp
 }
 
 void loop() {
@@ -104,7 +109,7 @@ void loop() {
       counter=0;
     }
     // if not touched more than 5 seconds
-    if(millis()-last_time >= 5000 && counter) // and also end count
+    if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
     {
         last_time = millis();
         counter=0;
