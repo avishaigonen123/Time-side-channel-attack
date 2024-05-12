@@ -11,8 +11,8 @@ Adafruit_MPR121 cap = Adafruit_MPR121();
 
 // Keeps track of the last pins touched
 // so we know when buttons are 'released'
-uint16_t lasttouched = 0;
-uint16_t currtouched = 0;
+uint16_t last_touched = 0;
+uint16_t curr_touched = 0;
 
 uint8_t password[PASS_SIZE]={3,2,1,0};
 
@@ -54,12 +54,12 @@ void initialize_password()
   do
   {
       // reset our state
-    lasttouched = currtouched;      
+    last_touched = curr_touched;      
     // Get the currently touched pads
-    currtouched = cap.touched();
+    curr_touched = cap.touched();
      for (uint8_t i=0; i<12; i++) {
       // it if *is* touched and *wasnt* touched before, alert!
-      if ((currtouched & _BV(i)) && !(lasttouched & _BV(i)) ) {
+      if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
         password[count] = i;
         Serial.println(i);
         count++;
@@ -70,18 +70,18 @@ void initialize_password()
   
   Serial.print("new password set:");
   for (int i = 0; i < PASS_SIZE; i++)
-  {
     Serial.print(password[i]); Serial.print(" ");
-  }  
+  
+  Serial.print("\n");
   return;
 }
 
 void loop() {
   
   // Get the currently touched pads
-  currtouched = cap.touched();
+  curr_touched = cap.touched();
   
-  if(currtouched==0x909 && lasttouched!=0x909) // intialiize password
+  if(curr_touched==0x909 && last_touched!=0x909) // intialiize password 
   {
     Serial.println("initlalize password");
     initialize_password();
@@ -113,7 +113,7 @@ void loop() {
     }
     for (uint8_t i=0; i<12; i++) {
       // it if *is* touched and *wasnt* touched before, alert!
-      if ((currtouched & _BV(i)) && !(lasttouched & _BV(i)) ) {
+      if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
         curr_pass[counter] = i;
         Serial.println(i);
         counter++;
@@ -124,5 +124,5 @@ void loop() {
     
   }
   // reset our state
-  lasttouched = currtouched;
+  last_touched = curr_touched;
 }
