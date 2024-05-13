@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include <Wire.h>
+#include <SPI.h>
 #include "Adafruit_MPR121.h"
 
 #ifndef _BV
@@ -68,17 +69,11 @@ void initialize_password()
      }
   } while (count!=PASS_SIZE);
   
-  Serial.print("new password set:");
-  for (int i = 0; i < PASS_SIZE; i++)
-    Serial.print(password[i]); Serial.print(" ");
-<<<<<<< HEAD:Arduino/src/main.cpp
-  
-  Serial.print("\n");
-  return;
-=======
-  }  
-  Serial.println();
->>>>>>> 32f47880bffa04c924d5a7020f4c4533c4ff09bd:src/main.cpp
+    Serial.print("new password set:");
+    for (int i = 0; i < PASS_SIZE; i++){
+        Serial.print(password[i]); Serial.print(" ");
+    }
+    Serial.println();
 }
 
 void loop() {
@@ -131,3 +126,15 @@ void loop() {
   // reset our state
   last_touched = curr_touched;
 }
+/**//*
+Adafruit_MPR121 cap = Adafruit_MPR121();
+void setup() {
+  Serial.begin(9600);
+  cap.begin(0x5A);
+  Serial.println("end");
+}
+
+void loop() {
+  delay(1000);
+}
+*/
