@@ -7,6 +7,10 @@
 #define _BV(bit) (1 << (bit)) 
 #endif
 #define PASS_SIZE 4
+#define MAX_PASS_SIZE 20
+#define RED_LED 12
+#define GREEN_LED 13
+
 // You can have up to 4 on one i2c bus but one is enough for testing!
 Adafruit_MPR121 cap = Adafruit_MPR121();
 
@@ -23,7 +27,12 @@ void setup() {
   while (!Serial) { // needed to keep leonardo/micro from starting too fast!
     delay(10);
   }
-  
+  pinMode(GREEN_LED, OUTPUT); // green LED
+  pinMode(12, OUTPUT); // red LED
+
+  digitalWrite(GREEN_LED, LOW);
+  digitalWrite(RED_LED, LOW);
+
   Serial.println("Adafruit MPR121 Capacitive Touch sensor test"); 
   
   // Default address is 0x5A, if tied to 3.3V its 0x5B
@@ -35,12 +44,12 @@ void setup() {
   Serial.println("MPR121 found!");
 }
 
-uint8_t curr_pass[PASS_SIZE];
+uint8_t curr_pass[MAX_PASS_SIZE];
 
-bool check_pass(uint8_t* pass)
+bool check_pass()
 {
   for (int i = 0; i < PASS_SIZE; i++)
-    if( pass[i]!=password[i])
+    if( curr_pass[i]!=password[i])
       return false;
   return true;
 }
@@ -48,8 +57,38 @@ bool check_pass(uint8_t* pass)
 uint8_t counter = 0;
 uint16_t last_time = millis(); 
 
-void initialize_password()
+void Wrong_pass()
 {
+  digitalWrite(RED_LED, HIGH);
+  Serial.print("Wrong!\n");
+}
+
+void Good_pass()
+{
+	digitalWrite(GREEN_LED, HIGH);
+	Serial.print("Well done, you guess!\n");
+}
+
+void manage_overflow()
+{
+  	digitalWrite(RED_LED, HIGH);
+  	Serial.print("Too much characters!\n");     
+}
+
+void initialize_password() 
+{
+    
+  digitalWrite(RED_LED, LOW);
+    delay(200);
+    digitalWrite(RED_LED, HIGH);
+    delay(200);
+    digitalWrite(RED_LED, LOW);
+    delay(200);
+    digitalWrite(RED_LED, HIGH);
+    delay(200);
+    digitalWrite(RED_LED, LOW);
+
+
   int count=0;
 
   do
@@ -74,6 +113,11 @@ void initialize_password()
         Serial.print(password[i]); Serial.print(" ");
     }
     Serial.println();
+
+    digitalWrite(GREEN_LED, HIGH);
+    delay(200);
+    digitalWrite(GREEN_LED, LOW);
+
 }
 
 void loop() {
@@ -81,9 +125,9 @@ void loop() {
   // Get the currently touched pads
   curr_touched = cap.touched();
   
-  if(curr_touched==0x909 && last_touched!=0x909) // intialiize password 
+  if(curr_touched==0x909 && last_touched!=0x909) // initialize password 
   {
-    Serial.println("initlalize password");
+    Serial.println("initialize password");
     initialize_password();
     counter = 0;
     last_time = millis();
@@ -91,17 +135,14 @@ void loop() {
   else
   {
       // check success
-    if(counter==PASS_SIZE)
+    if(curr_touched==0x800 && last_touched!=0x800)
     {
-      if(check_pass(curr_pass))
-      {
-        Serial.print("Well done, you guess!\n");
-      }
-      else
-      {
-        Serial.print("Wrong!\n");
-      }
-      counter=0;
+    	if(check_pass() && counter!=0)
+			Good_pass();
+      	else
+        	Wrong_pass();
+    	counter=0;
+		last_touched=curr_touched;
     }
     // if not touched more than 5 seconds
     if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
@@ -118,23 +159,18 @@ void loop() {
         Serial.println(i);
         counter++;
         last_time = millis();
+        digitalWrite(RED_LED, LOW);
+        digitalWrite(GREEN_LED, LOW);
         break;
       }
     }
-    
+
+    if(counter==MAX_PASS_SIZE)
+	{
+		manage_overflow();    
+		counter = 0;
+  	}
   }
   // reset our state
   last_touched = curr_touched;
 }
-/**//*
-Adafruit_MPR121 cap = Adafruit_MPR121();
-void setup() {
-  Serial.begin(9600);
-  cap.begin(0x5A);
-  Serial.println("end");
-}
-
-void loop() {
-  delay(1000);
-}
-*/
