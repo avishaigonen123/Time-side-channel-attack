@@ -11,6 +11,11 @@
 #define RED_LED 12
 #define GREEN_LED 13
 
+#define RESET_BUTTON 0x001
+#define ENTER_BUTTON 0x100
+#define INITIALIZE_VALUE 0x909
+
+const uint8_t real_to_fake_keypad[12] = {0xFF,7,4,1,0,8,5,2,0xFF,9,6,3};
 // You can have up to 4 on one i2c bus but one is enough for testing!
 Adafruit_MPR121 cap = Adafruit_MPR121();
 
@@ -19,7 +24,7 @@ Adafruit_MPR121 cap = Adafruit_MPR121();
 uint16_t last_touched = 0;
 uint16_t curr_touched = 0;
 
-uint8_t password[PASS_SIZE]={3,2,1,0};
+uint8_t password[PASS_SIZE]={2,5,8,0};
 
 void setup() {
   Serial.begin(9600);
@@ -57,13 +62,13 @@ bool check_pass()
 uint8_t counter = 0;
 uint16_t last_time = millis(); 
 
-void Wrong_pass()
+void manage_wrong_pass()
 {
   digitalWrite(RED_LED, HIGH);
   Serial.print("Wrong!\n");
 }
 
-void Good_pass()
+void manage_good_pass()
 {
 	digitalWrite(GREEN_LED, HIGH);
 	Serial.print("Well done, you guess!\n");
@@ -75,10 +80,25 @@ void manage_overflow()
   	Serial.print("Too much characters!\n");     
 }
 
-void initialize_password() 
+void manage_reset()
+{
+	Serial.println("reset button");
+	digitalWrite(GREEN_LED, LOW);
+  	digitalWrite(RED_LED, LOW);
+    delay(200);
+    digitalWrite(RED_LED, HIGH);
+    delay(200);
+    digitalWrite(RED_LED, LOW);
+    delay(200);
+    digitalWrite(RED_LED, HIGH);
+    delay(200);
+    digitalWrite(RED_LED, LOW);
+}
+
+void manage_initialize_password() 
 {
     
-  digitalWrite(RED_LED, LOW);
+  	digitalWrite(RED_LED, LOW);
     delay(200);
     digitalWrite(RED_LED, HIGH);
     delay(200);
@@ -100,8 +120,8 @@ void initialize_password()
      for (uint8_t i=0; i<12; i++) {
       // it if *is* touched and *wasnt* touched before, alert!
       if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
-        password[count] = i;
-        Serial.println(i);
+        password[count] = real_to_fake_keypad[i];
+        Serial.println(real_to_fake_keypad[i]);
         count++;
         break;
       }
@@ -122,30 +142,41 @@ void initialize_password()
 
 void loop() {
   
-  // Get the currently touched pads
-  curr_touched = cap.touched();
+ 	// Get the currently touched pads
+  	curr_touched = cap.touched();
   
-  if(curr_touched==0x909 && last_touched!=0x909) // initialize password 
-  {
-    Serial.println("initialize password");
-    initialize_password();
-    counter = 0;
-    last_time = millis();
-  }
-  else
-  {
-      // check success
-    if(curr_touched==0x800 && last_touched!=0x800)
-    {
-    	if(check_pass() && counter!=0)
-			Good_pass();
-      	else
-        	Wrong_pass();
-    	counter=0;
-		last_touched=curr_touched;
-    }
-    // if not touched more than 5 seconds
-    if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
+  	if(curr_touched != last_touched) 
+		switch (curr_touched)
+		{
+		case INITIALIZE_VALUE: // initialize password
+			Serial.println("initialize password");
+			manage_initialize_password();
+			last_time = millis();	
+			
+			counter=0;	
+			break;
+		
+		case ENTER_BUTTON: // enter button
+			Serial.println("enter button");
+			if(check_pass() && counter!=0)
+				manage_good_pass();
+			else
+				manage_wrong_pass();
+			counter=0;
+			last_touched=curr_touched;		
+			break;
+		
+		case RESET_BUTTON: // reset button
+		    manage_reset();
+			counter=0;
+			last_touched=curr_touched;		
+			break;
+		}
+
+
+  
+// if not touched more than 5 seconds
+	if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
     {
         last_time = millis();
         counter=0;
@@ -155,8 +186,8 @@ void loop() {
     for (uint8_t i=0; i<12; i++) {
       // it if *is* touched and *wasnt* touched before, alert!
       if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
-        curr_pass[counter] = i;
-        Serial.println(i);
+        curr_pass[counter] = real_to_fake_keypad[i];
+        Serial.println(real_to_fake_keypad[i]);
         counter++;
         last_time = millis();
         digitalWrite(RED_LED, LOW);
@@ -170,7 +201,7 @@ void loop() {
 		manage_overflow();    
 		counter = 0;
   	}
-  }
+  
   // reset our state
   last_touched = curr_touched;
 }
