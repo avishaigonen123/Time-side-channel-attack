@@ -51,16 +51,17 @@ void setup() {
 
 uint8_t curr_pass[MAX_PASS_SIZE];
 
+uint8_t counter = 0;
+uint16_t last_time = millis(); 
+
 bool check_pass()
 {
   for (int i = 0; i < PASS_SIZE; i++)
     if( curr_pass[i]!=password[i])
       return false;
-  return true;
+  return counter <= PASS_SIZE;  // because he might give the password+some other stuff
 }
 
-uint8_t counter = 0;
-uint16_t last_time = millis(); 
 
 void manage_wrong_pass()
 {
