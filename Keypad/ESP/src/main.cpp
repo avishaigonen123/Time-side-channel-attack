@@ -2,59 +2,45 @@
 #include <pins_arduino.h>
 #include <Wire.h>
 
+#define FAIL_PIN 27
+#define SUCCESS_PIN 14
 #define PASS_SIZE 4
 
-#define PIN_FAIL 18
-#define PIN_SUCCESS 19
+#define RESET_BUTTON 0x001
+#define ENTER_BUTTON 0x100
+#define INITIALIZE_VALUE 0x909
+#define TOUCH_DELAY 6
+
+const uint8_t real_to_fake_keypad[10] = {4, 3, 7, 11, 2, 6, 10, 1, 5 ,9};
 
 volatile uint8_t data[4];
-uint8_t pass[PASS_SIZE];
-uint8_t to_send[PASS_SIZE];
 
-uint8_t available_numbers[12] = {0,1,2,3,4,5,6,7,8,9,10,11}; 
-bool in_handle = false;
+uint16_t state = 0;
 
-uint8_t left_to_send = 4;
-void send_handle_func()
-{
-    if(left_to_send == 0)
-    {
-        for (int i = 0; i < 12; i++)
-        {
-            if(to_send[0]==12)
-            {
-                to_send[0] = 0;
-                if(to_send[1]==12)
-                {
-                    to_send[1] = 0;
-                    if(to_send[2]==12)
-                    {
-                        to_send[2] = 0;
-                        if(to_send[3]==12) 
-                        {   
-                            to_send[3] = 0;
-                        }   
-                        else
-                            to_send[3]++;
-                    }
-                    else
-                        to_send[2]++;
-                }
-                else
-                    to_send[1]++;
 
-            }
-            else
-                to_send[0]++;
-                Serial.print("here");        }
-        left_to_send=4;
-    }
-    Serial.println(to_send[4-left_to_send]);
-    Wire.write((uint8_t)to_send[4-left_to_send]);Wire.write(to_send[4-left_to_send] >> 8);
+void relaese(){
+	state = 0;
+	delay(TOUCH_DELAY);
+}
+
+void touch(uint8_t num){
+
+	state = 1 << real_to_fake_keypad[num];
+	delay(TOUCH_DELAY);
+}
+
+void reset(){
+	
+	state = RESET_BUTTON;
+	delay(TOUCH_DELAY);
+}
+
+void enter(){
+	
+	state = ENTER_BUTTON;
 }
 
 void onRec_Callback(int numOfBytes){
-  
     for(uint8_t i = 0 ; Wire.available() ; i++)
     {
         data[i] = Wire.read();
@@ -63,43 +49,83 @@ void onRec_Callback(int numOfBytes){
     }
 }
 void onReq_Callback(){
-    static uint16_t pass[PASS_SIZE];
     if(data[0] == 0x5E){
         Wire.write(0x24);
         //Serial.println("sent 0x24");
     }
-    else if(data[0] == 0x5D){ // not touching anything on keypad
+    else if(data[0] == 0x5D){
         Wire.write(0x0);
         //Serial.println("sent 0x0");
     }
-    else if(data[0] == 0x00){ // read from reg0, after touch
-        // Wire.write((uint8_t)state);Wire.write(state >> 8);
-        // state = (state << 1)?state << 1:1;
-        if(!in_handle)
-            in_handle = true;
-            send_handle_func();
-        //Serial.printf("data[0]: %u state: %u state\n",data[0], state, state & (uint16_t)0xFF00);
+    else if(data[0] == 0x00){
+        Wire.write((uint8_t)state);
+        Wire.write(state >> 8);
     }
     //Serial.println("\n++++++++++++++++++++++++++++++++++++");
     data[0] = 0xFF;
 }
 
 void setup() {
-    srand(time(NULL));
     Serial.begin(115200);
+    
     for (uint8_t i = 0; i < 4; i++)
     {
         data[i] = 0xFF;
     }
-    
-    pinMode(PIN_FAIL, INPUT);
-    pinMode(PIN_SUCCESS, INPUT);
-
+    interrupts();
     Wire.begin(0x5A, SDA, SCL, 400000);
     Wire.onReceive(onRec_Callback);
     Wire.onRequest(onReq_Callback);
+    pinMode(FAIL_PIN, INPUT);
+    pinMode(SUCCESS_PIN, INPUT);
+	Serial.println(clockCyclesPerMicrosecond());
+	relaese();
+	delay(1000);
 }
 
+uint32_t sendPassword(uint8_t* password)
+{
+    
+    for (uint8_t i = 0; i < PASS_SIZE; i++)
+    {
+        touch(password[i]);
+        relaese();
+    }
+    enter();
+	uint32_t begin_time = micros();
+	noInterrupts();
+	while(!digitalRead(FAIL_PIN) && !digitalRead(SUCCESS_PIN));
+	interrupts();
+	uint32_t end_time = micros();
+
+    return  end_time - begin_time;
+}
+uint8_t pass[PASS_SIZE] = {0,0,0,0};
 void loop() {
-    delay(1);
+    // generate the password each loop iteration
+	
+	uint32_t res;
+    uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
+    uint32_t results[10] = {0,0,0,0,0,0,0,0,0,0};
+	for (uint8_t i = 0; i < 50; i++){
+		uint32_t max_time = 0;
+		for (uint8_t j = 0; j < 10; j++)
+		{
+			pass[0] = j;
+            results[j] = sendPassword(pass);
+            if(results[j] > max_time)
+                max_time = results[j];
+         
+		}
+        for (uint8_t j = 0; j < 10; j++)
+            if(results[j] == max_time)
+                maxes[j]++;
+		
+	} 
+    for(int i = 0; i < 10; i++)
+    {
+        Serial.print(maxes[i]);
+        Serial.print(" ");
+    }
+	Serial.println("-----------------------------");
 }
