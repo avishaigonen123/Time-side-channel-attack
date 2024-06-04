@@ -11,7 +11,7 @@ using namespace Touch;
 #define FAIL_PIN2 12
 #define SUCCESS_PIN 14
 
-#define PASS_SIZE 4 
+#define PASS_SIZE 15
 
 hw_timer_t * timer = NULL;
 volatile uint64_t startTime = 0;
@@ -108,7 +108,7 @@ void MainLoop(void*) {
 	relaese();
 	delay(4000);
     
-    const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
+    const uint8_t initPass[PASS_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
     // generate the password each loop iteration
 	for(;;){
         memcpy(pass, initPass, PASS_SIZE);
@@ -117,7 +117,7 @@ void MainLoop(void*) {
 		{
 			uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
 			uint32_t results[10] = {0,0,0,0,0,0,0,0,0,0};
-			for (uint8_t i = 0; i < 20; i++){
+			for (uint8_t i = 0; i < 50; i++){
 				uint32_t max_time = 0;
 				for (uint8_t j = 0; j < 10; j++)
 				{
