@@ -6,18 +6,26 @@
 #define SUCCESS_PIN 14
 #define PASS_SIZE 4
 
-#define ROW_0 GPIO_NUM_15
-#define ROW_1 GPIO_NUM_2
-#define ROW_2 GPIO_NUM_4
-#define ROW_3 GPIO_NUM_16
-#define COL_0 GPIO_NUM_17
-#define COL_1 GPIO_NUM_5
-#define COL_2 GPIO_NUM_18
+#define ROW_0 GPIO_NUM_19
+#define ROW_1 GPIO_NUM_18
+#define ROW_2 GPIO_NUM_5
+#define ROW_3 GPIO_NUM_17
+#define COL_0 GPIO_NUM_16
+#define COL_1 GPIO_NUM_4
+#define COL_2 GPIO_NUM_15
 
 #define RESET_BUTTON 10
 #define ENTER_BUTTON 11
 #define TOUCH_DELAY 5
 
+uint8_t state = 0;
+
+void printCol(){
+    Serial.printf("%d %d %d\n",
+        digitalRead(COL_0),
+        digitalRead(COL_1),
+        digitalRead(COL_2));
+}
 
 uint8_t rowMap(uint8_t num){
     switch (num)
@@ -66,60 +74,38 @@ uint8_t colMap(uint8_t num){
     }
 }
 
-void writeCol(uint8_t col, uint8_t value) {
-    digitalWrite(COL_0, !value);
-    digitalWrite(COL_1, !value);
-    digitalWrite(COL_2, !value);
-    digitalWrite(col, value);
-}
-
-
-void setColLow(){
-    digitalWrite(COL_0, LOW);
-    digitalWrite(COL_1, LOW);
-    digitalWrite(COL_2, LOW);
-}
-
-void waitToRow(uint8_t row){
-    while(!digitalRead(row));
-}
-
-void relaese(){
-    setColLow();
-	delay(TOUCH_DELAY);
-}
-
-bool readyToStart(){
-    return !digitalRead(ROW_0) && !digitalRead(ROW_1) && !digitalRead(ROW_2) && !digitalRead(ROW_3);
+bool readyToSend(uint8_t col)
+{
+    switch (col)
+    {
+        case COL_0:
+            return !digitalRead(COL_0) && digitalRead(COL_1) && digitalRead(COL_2);
+        case COL_1:
+            return digitalRead(COL_0) && !digitalRead(COL_1) && digitalRead(COL_2);
+        case COL_2:
+            return digitalRead(COL_0) && digitalRead(COL_1) && !digitalRead(COL_2);
+    }
+    return false;               
 }
 
 void touch(uint8_t num){
-
-	while(readyToStart()); // wait until ready to start, all raws are zero
-    Serial.println("starting touch");
-    writeCol(colMap(num), LOW);
-    Serial.println("wrote LOW");
-    /// set all columns to zero
-
-    setColLow();
-    
-    waitToRow(rowMap(num));
-    Serial.println("got row");
-
-    writeCol(colMap(num), HIGH);
-    Serial.println("wrote col");
-
-    while(readyToStart()); // wait until ready to start, all raws are zero
+    while(!readyToSend(colMap(num)));
+    digitalWrite(rowMap(num), LOW);
 }
 
 void reset(){
-	
 	touch(RESET_BUTTON);
 }
 
 void enter(){
-	
 	touch(ENTER_BUTTON);
+}
+
+void release(){
+    digitalWrite(ROW_0, HIGH);
+    digitalWrite(ROW_1, HIGH);
+    digitalWrite(ROW_2, HIGH);
+    digitalWrite(ROW_3, HIGH);
 }
 
 void setup() {
@@ -127,68 +113,31 @@ void setup() {
     pinMode(FAIL_PIN, INPUT);
     pinMode(SUCCESS_PIN, INPUT);
 
-    pinMode(ROW_0, INPUT);
-    pinMode(ROW_1, INPUT);
-    pinMode(ROW_2, INPUT);
-    pinMode(ROW_3, INPUT);
-    pinMode(COL_0, OUTPUT);
-    pinMode(COL_1, OUTPUT);
-    pinMode(COL_2, OUTPUT);
-}
-void loop(){
-    /*touch(1);
-    relaese();
-    touch(2);
-    relaese();
-    touch(3);
-    relaese();
-    touch(4);
-    relaese();*/
-    Serial.printf("%d %d %d %d\n",digitalRead(ROW_0),digitalRead(ROW_1),digitalRead(ROW_2),digitalRead(ROW_3));
-}
-/*
-uint32_t sendPassword(uint8_t* password)
-{
+    pinMode(ROW_0, OUTPUT);
+    pinMode(ROW_1, OUTPUT);
+    pinMode(ROW_2, OUTPUT);
+    pinMode(ROW_3, OUTPUT);
+    pinMode(COL_0, INPUT);
+    pinMode(COL_1, INPUT);
+    pinMode(COL_2, INPUT);
     
-    for (uint8_t i = 0; i < PASS_SIZE; i++)
-    {
-        touch(password[i]);
-        relaese();
-    }
-    enter();
-	uint32_t begin_time = micros();
-	while(!digitalRead(FAIL_PIN) && !digitalRead(SUCCESS_PIN));
-	uint32_t end_time = micros();
+    release();
 
-    return  end_time - begin_time;
 }
-uint8_t pass[PASS_SIZE] = {0,0,0,0};
-void loop() {
-    // generate the password each loop iteration
-	
-	uint32_t res;
-    uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
-    uint32_t results[10] = {0,0,0,0,0,0,0,0,0,0};
-	for (uint8_t i = 0; i < 50; i++){
-		uint32_t max_time = 0;
-		for (uint8_t j = 0; j < 10; j++)
-		{
-			pass[0] = j;
-            results[j] = sendPassword(pass);
-            if(results[j] > max_time)
-                max_time = results[j];
-         
-		}
-        for (uint8_t j = 0; j < 10; j++)
-            if(results[j] == max_time)
-                maxes[j]++;
-		
-	} 
-    for(int i = 0; i < 10; i++)
+
+void loop(){
+    for (size_t i = 0; i < 10; i++)
     {
-        Serial.print(maxes[i]);
-        Serial.print(" ");
+        touch(5);
+        delay(1);
+        release();
+        delay(10);
+        //Serial.println(i);
     }
-	Serial.println("-----------------------------");
+    
+    //delay(10);
+    //relaese();
+    //printCol();
+    
+    //delay(0);
 }
-*/
