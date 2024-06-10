@@ -17,10 +17,12 @@
 #define MAX_PASS_SIZE 20
 #define RED_LED 12
 #define GREEN_LED 13
-#define START_PIN 10
 
 #define RESET_BUTTON '*'
 #define ENTER_BUTTON '#'
+// #define INITIALIZE_VALUE ''
+
+uint8_t password[PASS_SIZE]={2,5,8,0};
 
 // Constants for row and column sizes
 const byte ROWS = 4;
@@ -46,42 +48,110 @@ void setup() {
   Serial.begin(9600);
 
   pinMode(GREEN_LED, OUTPUT); // green LED
-  pinMode(RED_LED, OUTPUT); // red LED
-  pinMode(START_PIN, INPUT_PULLUP); // red LED
+  pinMode(12, OUTPUT); // red LED
 
   digitalWrite(GREEN_LED, LOW);
   digitalWrite(RED_LED, LOW);
 
-  customKeypad.setDebounceTime(0);
+  customKeypad.setDebounceTime(1);
 }
 
-byte sum = 0;
-uint32_t globalCount = 0;
-uint32_t perfectCount = 0;
+uint8_t curr_pass[MAX_PASS_SIZE];
+uint8_t counter = 0;
+uint16_t last_time = millis(); 
+
+bool check_pass()
+{
+  for (int i = 0; i < PASS_SIZE; i++)
+  {
+    if( curr_pass[i]!=password[i])
+      return false;
+    delayMicroseconds(1000); 
+  }
+  return counter <= PASS_SIZE;  // because he might give the password+some other stuff
+}
+
+
+
+void manage_wrong_pass()
+{
+  digitalWrite(RED_LED, HIGH);
+  // Serial.print("Wrong!\n");
+}
+
+void manage_good_pass()
+{
+	digitalWrite(GREEN_LED, HIGH);
+	Serial.print("Well done, you guess!\n");
+}
+
+void manage_overflow()
+{
+  	digitalWrite(RED_LED, HIGH);
+  	Serial.print("Too much characters!\n");     
+}
+
+void manage_reset()
+{
+	Serial.println("reset button");
+	digitalWrite(GREEN_LED, LOW);
+  	digitalWrite(RED_LED, LOW);
+    delay(200);
+    digitalWrite(RED_LED, HIGH);
+    delay(200);
+    digitalWrite(RED_LED, LOW);
+    delay(200);
+    digitalWrite(RED_LED, HIGH);
+    delay(200);
+    digitalWrite(RED_LED, LOW);
+}
+
 
 void loop() {
-	if(globalCount<100){
-		char customKey = customKeypad.getKey();
-		if(customKey){
-			if(customKey <= '9' && customKey >= '0'){
-				sum = (sum==(customKey-'0'))?sum+1:sum;
-			}
-			else if(customKey == '*'){
-				globalCount++;
-				if(sum == 10){
-					perfectCount++;
-				}
-				else{
-					Serial.print(" miss: ");
-					Serial.print(sum);
-					Serial.print(" | ");
-				}
-				Serial.print(perfectCount);
-				Serial.print("/");
-				Serial.print(globalCount);
-				Serial.println();
-				sum = 0;
-			}
+  
+	// Get key value if pressed
+	char customKey = customKeypad.getKey();
+	if(customKey)
+	{
+		Serial.println(customKey);
+		last_time = millis();	
+
+		switch (customKey)
+			{
+			case ENTER_BUTTON: // enter button
+				// Serial.println("enter button");
+				if(check_pass() && counter!=0)
+					manage_good_pass();
+				else
+					manage_wrong_pass();
+				counter=0;
+				break;
+			
+			case RESET_BUTTON: // reset button
+				manage_reset();
+				counter=0;
+				break;
+		default: 
+				curr_pass[counter] = int(customKey-'0');
+				counter++;
+				last_time = millis();
+				digitalWrite(RED_LED, LOW);
+				digitalWrite(GREEN_LED, LOW);
+			break;
 		}
+	}
+	// if not touched more than 5 seconds
+	if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
+	{
+		last_time = millis();
+		counter=0;
+		Serial.print("Time Out!\n");
+		delay(10);
+	}
+
+	if(counter==MAX_PASS_SIZE)
+	{
+		manage_overflow();    
+		counter = 0;
 	}
 }

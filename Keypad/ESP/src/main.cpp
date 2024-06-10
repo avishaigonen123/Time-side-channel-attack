@@ -19,6 +19,15 @@
 #define ENTER_BUTTON 11
 #define TOUCH_DELAY 5
 
+hw_timer_t * timer = NULL;
+volatile uint64_t startTime = 0;
+volatile uint64_t endTime = 0;
+volatile bool measure = false;
+
+void IRAM_ATTR stopTimer();
+
+void IRAM_ATTR startTimer();
+
 byte col = COL_0;
 byte row = ROW_2;
 
@@ -106,29 +115,98 @@ void press(byte num){
     delay(5);
 }
 
-void reset(){
+void inline reset(){
 	press(RESET_BUTTON);
 }
 
-void enter(){
-	press(ENTER_BUTTON);
+void inline enter(){
+    waitForChange();
+    startTimer();
+    row = rowMap(ENTER_BUTTON);
+    col = colMap(ENTER_BUTTON);
+    waitForChange();
+    delay(3);
+    release();
+    delay(5);
 }
 
 void touchHandler(void*){
+    taskDISABLE_INTERRUPTS();
     for(;;){
         digitalWrite(row, digitalRead(col));
     }
 }
+void theEnd();
 
+byte pass[4] = { 0, 0, 0, 0 };
+uint64_t sendPassword(uint8_t* password)
+{
+    for (size_t i = 0; i < PASS_SIZE; i++)
+        press(password[i]);
+    enter();
+
+	while (measure || startTime == 0 || endTime == 0){ yield(); }
+		//Serial.printf("%d ,%" PRIu64 ",%" PRIu64 "\n" , measure, endTime, startTime);
+
+    uint64_t duration = endTime - startTime;
+    startTime = 0; // Reset startTime for next measurement
+    endTime = 0; // Reset endTime for next measurement
+
+    return duration;
+}
 void Main(void*){
     Serial.println("Main");
-    for(;;){
-        for (size_t i = 0; i < 10; i++){
-            press(i);
-            Serial.println(i);
-        }
-        reset();
-    }
+
+
+    timer = timerBegin(0, 2, true); // Use timer 0, prescaler 1 (4.17ns per tick), count up
+
+    delay(1000);
+	reset();
+    reset();
+	delay(4000);
+
+    attachInterrupt(digitalPinToInterrupt(FAIL_PIN), stopTimer, RISING);
+    attachInterrupt(digitalPinToInterrupt(SUCCESS_PIN), theEnd, RISING);
+
+    const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
+    // generate the password each loop iteration
+	for(;;){
+        memcpy(pass, initPass, PASS_SIZE);
+
+		for (uint8_t index = 0; index < PASS_SIZE; index++)
+		{
+			uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
+			uint64_t results[10] = {0,0,0,0,0,0,0,0,0,0};
+			for (uint8_t i = 0; i < 20; i++){
+				uint64_t max_time = 0;
+				for (uint8_t j = 0; j < 10; j++)
+				{
+					pass[index] = j;
+					results[j] = sendPassword(pass);
+					if(results[j] > max_time)
+						max_time = results[j];
+				}
+				for (uint8_t j = 0; j < 10; j++)
+					if(results[j] == max_time)
+						maxes[j]++;
+			}
+			for (uint8_t j = 0; j < 10; j++){
+			    Serial.print(maxes[j]);
+				Serial.print(" ");
+			}
+			Serial.println();
+			uint8_t max = 0;
+			uint8_t maxval = 0;
+			for (uint8_t j = 0; j < 10; j++)
+			    if(maxes[j] > maxval){
+				    max = j;
+                    maxval = maxes[j];
+                }
+			pass[index] = max;
+			Serial.println(max);
+		}
+		Serial.println();
+	}
 }
 
 void setup() {
@@ -170,3 +248,27 @@ void setup() {
 
 void loop(){}
 
+// ISR for FAIL_PIN
+void IRAM_ATTR stopTimer() {
+    if (measure) {
+        endTime = timerRead(timer);
+        measure = false;
+    }
+}
+
+void IRAM_ATTR startTimer() {
+    if (!measure) {
+		//Serial.println("A");
+        timerWrite(timer, 0); // Reset the timer
+        startTime = timerRead(timer);
+        measure = true;
+    }
+}
+
+void theEnd(){
+    Serial.println("The End");
+    for (size_t i = 0; i < PASS_SIZE; i++){
+        Serial.print(pass[i]);
+    }
+    vTaskDelete(NULL);
+}
