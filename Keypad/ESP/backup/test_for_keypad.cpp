@@ -114,6 +114,10 @@ void enter(){
 	press(ENTER_BUTTON);
 }
 
+inline byte touchMap() {
+    return digitalRead(COL_0) | digitalRead(COL_1) << 1 | digitalRead(COL_2) << 2;
+}
+
 void touchHandler(void*){
     for(;;){
         digitalWrite(row, digitalRead(col));
@@ -135,6 +139,8 @@ void setup() {
     Serial.begin(115200);
     pinMode(FAIL_PIN, INPUT);
     pinMode(SUCCESS_PIN, INPUT);
+    //disableCore0WDT();
+    //disableCore1WDT();
     pinMode(ROW_0, OUTPUT);
     pinMode(ROW_1, OUTPUT);
     pinMode(ROW_2, OUTPUT);
