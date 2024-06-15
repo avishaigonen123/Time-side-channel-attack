@@ -11,18 +11,18 @@
 // Include the Keypad library
 #include <Keypad.h>
 #include <Arduino.h>
-#include <Wire.h>
 
 #define PASS_SIZE 4
 #define MAX_PASS_SIZE 20
 #define RED_LED 12
 #define GREEN_LED 13
+#define GO_pin 10
 
 #define RESET_BUTTON '*'
 #define ENTER_BUTTON '#'
 // #define INITIALIZE_VALUE ''
 
-uint8_t password[PASS_SIZE]={2,5,8,0};
+uint8_t password[PASS_SIZE]={8,5,8,0};
 
 // Constants for row and column sizes
 const byte ROWS = 4;
@@ -48,7 +48,8 @@ void setup() {
   Serial.begin(9600);
 
   pinMode(GREEN_LED, OUTPUT); // green LED
-  pinMode(12, OUTPUT); // red LED
+  pinMode(RED_LED, OUTPUT); // red LED
+  pinMode(GO_pin, OUTPUT); // red LED
 
   digitalWrite(GREEN_LED, LOW);
   digitalWrite(RED_LED, LOW);
@@ -62,21 +63,21 @@ uint16_t last_time = millis();
 
 bool check_pass()
 {
-  for (int i = 0; i < PASS_SIZE; i++)
-  {
-    if( curr_pass[i]!=password[i])
-      return false;
-    delayMicroseconds(1000); 
-  }
-  return counter <= PASS_SIZE;  // because he might give the password+some other stuff
+	for (int i = 0; i < PASS_SIZE; i++)
+	{
+		if( curr_pass[i]!=password[i])
+		return false;
+		delay(100);
+	}
+	return counter <= PASS_SIZE;  // because he might give the password+some other stuff
 }
 
 
 
 void manage_wrong_pass()
 {
-  digitalWrite(RED_LED, HIGH);
-  // Serial.print("Wrong!\n");
+	digitalWrite(RED_LED, HIGH);
+	// Serial.print("Wrong!\n");
 }
 
 void manage_good_pass()
@@ -122,8 +123,9 @@ void loop() {
 				// Serial.println("enter button");
 				if(check_pass() && counter!=0)
 					manage_good_pass();
-				else
+				else{
 					manage_wrong_pass();
+				}
 				counter=0;
 				break;
 			
