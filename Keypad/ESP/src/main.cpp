@@ -13,12 +13,14 @@
 #define COL_0 GPIO_NUM_16
 #define COL_1 GPIO_NUM_4
 #define COL_2 GPIO_NUM_15
+#define NO_KEY GPIO_NUM_2  // Unused
 
 #define RESET_BUTTON 10
 #define ENTER_BUTTON 11
 #define TOUCH_DELAY 5
 
-uint8_t state = 0;
+byte Row = 0xff;
+byte Col = 0xff;
 
 void printCol(){
     Serial.printf("%d %d %d\n",
@@ -27,7 +29,7 @@ void printCol(){
         digitalRead(COL_2));
 }
 
-uint8_t rowMap(uint8_t num){
+byte rowMap(byte num){
     switch (num)
     {
     case 1:
@@ -47,11 +49,11 @@ uint8_t rowMap(uint8_t num){
     case ENTER_BUTTON:
         return ROW_3;
     default:
-        return -1;
+        return NO_KEY;
     }
 }
 
-uint8_t colMap(uint8_t num){
+byte colMap(byte num){
     switch (num)
     {
     case 1:
@@ -70,49 +72,77 @@ uint8_t colMap(uint8_t num){
     case ENTER_BUTTON:
         return COL_2;
     default:
-        return -1;
+        return NO_KEY;
     }
 }
 
-bool readyToSend(uint8_t col)
-{
-    switch (col)
-    {
-        case COL_0:
-            return !digitalRead(COL_0) && digitalRead(COL_1) && digitalRead(COL_2);
-        case COL_1:
-            return digitalRead(COL_0) && !digitalRead(COL_1) && digitalRead(COL_2);
-        case COL_2:
-            return digitalRead(COL_0) && digitalRead(COL_1) && !digitalRead(COL_2);
-    }
-    return false;               
-}
-
-void touch(uint8_t num){
-    while(!readyToSend(colMap(num)));
-    digitalWrite(rowMap(num), LOW);
-}
-
-void reset(){
-	touch(RESET_BUTTON);
-}
-
-void enter(){
-	touch(ENTER_BUTTON);
+inline byte getTouchMap(){
+    return digitalRead(COL_0) | digitalRead(COL_1) << 1 | digitalRead(COL_2) << 2;
 }
 
 void release(){
+    Row = NO_KEY;
     digitalWrite(ROW_0, HIGH);
     digitalWrite(ROW_1, HIGH);
     digitalWrite(ROW_2, HIGH);
     digitalWrite(ROW_3, HIGH);
 }
 
+void touch(byte num){
+    Row = rowMap(num);
+    Col = colMap(num);
+    Serial.print("num: ");
+    Serial.println(num);
+    digitalWrite(ROW_0, HIGH);
+    digitalWrite(ROW_1, HIGH);
+    digitalWrite(ROW_2, HIGH);
+    digitalWrite(ROW_3, HIGH);
+}
+
+void reset(){
+    touch(RESET_BUTTON);
+}
+
+void enter(){
+    touch(ENTER_BUTTON);
+}
+
+void Main(void*){
+    for(;;){
+        if (Row != NO_KEY && Col != NO_KEY) {
+            digitalWrite(Row, digitalRead(Col));
+        }
+        vTaskDelay(1);  // Add a small delay to yield to other tasks
+    }
+}
+
+void toucher(void*){
+    for(;;){
+        for (size_t i = 0; i < 10; i++){
+            touch(i);
+            vTaskDelay(100);
+            release();
+            vTaskDelay(100);
+        }
+    }
+}
+
+void monit(void*){
+    for(;;){
+        Serial.print(Row);
+        Serial.print(" ");
+        if (Row != NO_KEY) {
+            Serial.print(digitalRead(Row));
+        }
+        Serial.print(" ");
+        Serial.println(getTouchMap());
+        vTaskDelay(1);  // Add a small delay to yield to other tasks
+    }
+}
+
 void setup() {
     Serial.begin(115200);
-    pinMode(FAIL_PIN, INPUT);
-    pinMode(SUCCESS_PIN, INPUT);
-
+    
     pinMode(ROW_0, OUTPUT);
     pinMode(ROW_1, OUTPUT);
     pinMode(ROW_2, OUTPUT);
@@ -120,24 +150,38 @@ void setup() {
     pinMode(COL_0, INPUT);
     pinMode(COL_1, INPUT);
     pinMode(COL_2, INPUT);
-    
+
+    xTaskCreatePinnedToCore(
+        Main,
+        "main",
+        3000,  // Increase stack size
+        NULL,
+        21,
+        NULL,
+        1
+    );
+
+    xTaskCreatePinnedToCore(
+        monit,
+        "monit",
+        2000,  // Increase stack size
+        NULL,
+        20,
+        NULL,
+        0
+    );
+
+    xTaskCreatePinnedToCore(
+        toucher,
+        "toucher",
+        2000,  // Increase stack size
+        NULL,
+        20,
+        NULL,
+        0
+    );
     release();
-
+    vTaskDelete(NULL);
 }
 
-void loop(){
-    for (size_t i = 0; i < 10; i++)
-    {
-        touch(5);
-        delay(1);
-        release();
-        delay(10);
-        //Serial.println(i);
-    }
-    
-    //delay(10);
-    //relaese();
-    //printCol();
-    
-    //delay(0);
-}
+void loop(){}

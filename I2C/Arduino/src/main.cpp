@@ -6,7 +6,7 @@
 #ifndef _BV
 #define _BV(bit) (1 << (bit)) 
 #endif
-#define PASS_SIZE 15
+#define PASS_SIZE 4
 #define MAX_PASS_SIZE 20
 #define RED_LED 12
 #define GREEN_LED 13
@@ -24,27 +24,27 @@ Adafruit_MPR121 cap = Adafruit_MPR121();
 uint16_t last_touched = 0;
 uint16_t curr_touched = 0;
 
-uint8_t password[PASS_SIZE]={1,2,3,4,5,6,7,8,9,0,1,2,3,4,5};
+uint8_t password[PASS_SIZE]={9,5,8,9};
 
 void setup() {
-  /* Serial.begin(115200);
+  Serial.begin(115200);
 
   while (!Serial) { // needed to keep leonardo/micro from starting too fast!
     delay(10);
   }
-  */
+  
   pinMode(GREEN_LED, OUTPUT); // green LED
   pinMode(12, OUTPUT); // red LED
 
   digitalWrite(GREEN_LED, LOW);
   digitalWrite(RED_LED, LOW);
 
-  // Serial.println("Adafruit MPR121 Capacitive Touch sensor test"); 
+  Serial.println("Adafruit MPR121 Capacitive Touch sensor test"); 
   
   // Default address is 0x5A, if tied to 3.3V its 0x5B
   // If tied to SDA its 0x5C and if SCL then 0x5D
   if (!cap.begin(0x5A)) {
-    // Serial.println("MPR121 not found, check wiring?");
+    Serial.println("MPR121 not found, check wiring?");
     while (1);
   }
   // Serial.println("MPR121 found!");
@@ -75,18 +75,18 @@ void manage_wrong_pass()
 void manage_good_pass()
 {
 	digitalWrite(GREEN_LED, HIGH);
-	// Serial.print("Well done!\n");
+	Serial.print("Well done!\n");
 }
 
 void manage_overflow()
 {
   	digitalWrite(RED_LED, HIGH);
-  //	Serial.print("Too much characters!\n");     
+  	Serial.print("Too much characters!\n");     
 }
 
 void manage_reset()
 {
-	// Serial.println("reset button");
+	Serial.println("reset button");
 	digitalWrite(GREEN_LED, LOW);
   	digitalWrite(RED_LED, LOW);
     delay(200);
@@ -125,7 +125,7 @@ void manage_initialize_password()
       // it if is touched and wasnt touched before, alert!
       if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
         password[count] = real_to_fake_keypad[i];
-      //  Serial.println(real_to_fake_keypad[i]);
+        Serial.println(real_to_fake_keypad[i]);
         count++;
         break;
       }
@@ -161,7 +161,7 @@ void loop() {
 			break;
 		
 		case ENTER_BUTTON: // enter button
-		//	Serial.println("e");
+			Serial.println("e");
 			if(check_pass() && counter!=0)
 				manage_good_pass();
 			else
@@ -184,14 +184,14 @@ void loop() {
     {
         last_time = millis();
         counter=0;
-      //  Serial.print("Time Out!\n");
+        Serial.print("Time Out!\n");
         delay(10);
     }
     for (uint8_t i=0; i<12; i++) {
       // it if is touched and wasnt touched before, alert!
       if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
         curr_pass[counter] = real_to_fake_keypad[i];
-      //  Serial.println(real_to_fake_keypad[i]);
+        Serial.println(real_to_fake_keypad[i]);
         counter++;
         last_time = millis();
         digitalWrite(RED_LED, LOW);
