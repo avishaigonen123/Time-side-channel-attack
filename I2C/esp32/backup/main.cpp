@@ -11,10 +11,9 @@ using namespace Touch;
 #define FAIL_PIN2 12
 #define SUCCESS_PIN 14
 
-#define PASS_SIZE 15
+#define PASS_SIZE 4 
 
 hw_timer_t * timer = NULL;
-volatile uint64_t startTime = 0;
 volatile uint64_t endTime = 0;
 volatile bool measure = false;
 
@@ -89,7 +88,7 @@ void MainLoop(void*) {
     TaskHandle_t i2c_th = xTaskGetHandle("i2c_slave_task");
     if (i2c_th != NULL) {
         // Task handle is valid, proceed with notification
-        xTaskNotify(i2c_th, 0x01, eSetBits);
+        //xTaskNotify(i2c_th, 0x01, eSetBits);
     } else {
         // Task handle is invalid, handle error or debug
         Serial.println("Invalid task handle!");
@@ -108,7 +107,7 @@ void MainLoop(void*) {
 	relaese();
 	delay(4000);
     
-    const uint8_t initPass[PASS_SIZE] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
     // generate the password each loop iteration
 	for(;;){
         memcpy(pass, initPass, PASS_SIZE);
@@ -117,7 +116,7 @@ void MainLoop(void*) {
 		{
 			uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
 			uint32_t results[10] = {0,0,0,0,0,0,0,0,0,0};
-			for (uint8_t i = 0; i < 50; i++){
+			for (uint8_t i = 0; i < 20; i++){
 				uint32_t max_time = 0;
 				for (uint8_t j = 0; j < 10; j++)
 				{
@@ -162,19 +161,14 @@ void IRAM_ATTR stopTimer() {
 
 void IRAM_ATTR startTimer() {
     if (!measure) {
-		//Serial.println("A");
         timerWrite(timer, 0); // Reset the timer
-        startTime = timerRead(timer);
         measure = true;
     }
 }
 
 void onRec_Callback(int numOfBytes){
-    for(uint8_t i = 0 ; Wire.available() ; i++)
-    {
+    for(uint8_t i = 0 ; Wire.available() ; i++){
         data[i] = Wire.read();
-        //Serial.print(, HEX);
-        //Serial.print(" ");
     }
 }
 void onReq_Callback(){
@@ -207,11 +201,11 @@ uint64_t sendPassword(uint8_t* password)
     }
 
     enter();
-	while (measure || startTime == 0 || endTime == 0){}
+	while (measure || endTime == 0){}
 		//Serial.printf("%d ,%" PRIu64 ",%" PRIu64 "\n" , measure, endTime, startTime);
 
-    uint64_t duration = endTime - startTime;
-    startTime = 0; // Reset startTime for next measurement
+    uint64_t duration = endTime;
+    //startTime = 0; // Reset startTime for next measurement
     endTime = 0; // Reset endTime for next measurement
 
     return duration;
@@ -219,9 +213,8 @@ uint64_t sendPassword(uint8_t* password)
 
 void theEnd(){
     if(state == ENTER_BUTTON){
-	    Serial.println("The End");
-        for (size_t i = 0; i < PASS_SIZE; i++)
-        {
+        Serial.println("The End");
+        for (size_t i = 0; i < PASS_SIZE; i++){
             Serial.print(pass[i]);
         }
     }
