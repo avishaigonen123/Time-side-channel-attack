@@ -94,3 +94,8 @@ byte EllipticCurve::key_length(uint32_t k)
             return i + 1;
     return 0;
 }
+
+uint32_t EllipticCurve::modulo(int32_t a, int32_t b) {
+    int r = a % b;
+    return r >= 0 ? r : r + b;
+}

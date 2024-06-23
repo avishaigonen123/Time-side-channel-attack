@@ -1,6 +1,6 @@
 #ifndef ELLIPTIC_CURVE_H 
 #define ELLIPTIC_CURVE_H
-#include <stdint.h>
+#include <Arduino.h>
 #include "Point.h"
 
 class EllipticCurve{
