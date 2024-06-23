@@ -1,211 +1,176 @@
 #include <Arduino.h>
-#include <Wire.h>
-#include <SPI.h>
-#include "Adafruit_MPR121.h"
+#include <SoftwareSerial.h>
 
-#ifndef _BV
-#define _BV(bit) (1 << (bit)) 
-#endif
-#define PASS_SIZE 15
-#define MAX_PASS_SIZE 20
-#define RED_LED 12
-#define GREEN_LED 13
+// start the software serial, for communication with the ESP32
+SoftwareSerial SerialESP32(6,7);
 
-#define RESET_BUTTON 0x001
-#define ENTER_BUTTON 0x100
-#define INITIALIZE_VALUE 0x909
+int modularInverse(int, int);
+uint32_t modulo(int32_t, int32_t);
+byte key_length(uint32_t);
 
-const uint8_t real_to_fake_keypad[12] = {0xFF,7,4,1,0,8,5,2,0xFF,9,6,3};
-// You can have up to 4 on one i2c bus but one is enough for testing!
-Adafruit_MPR121 cap = Adafruit_MPR121();
+typedef struct Point{
+	uint32_t x, y;
 
-// Keeps track of the last pins touched
-// so we know when buttons are 'released'
-uint16_t last_touched = 0;
-uint16_t curr_touched = 0;
-
-uint8_t password[PASS_SIZE]={1,2,3,4,5,6,7,8,9,0,1,2,3,4,5};
-
-void setup() {
-  /* Serial.begin(115200);
-
-  while (!Serial) { // needed to keep leonardo/micro from starting too fast!
-    delay(10);
-  }
-  */
-  pinMode(GREEN_LED, OUTPUT); // green LED
-  pinMode(12, OUTPUT); // red LED
-
-  digitalWrite(GREEN_LED, LOW);
-  digitalWrite(RED_LED, LOW);
-
-  // Serial.println("Adafruit MPR121 Capacitive Touch sensor test"); 
-  
-  // Default address is 0x5A, if tied to 3.3V its 0x5B
-  // If tied to SDA its 0x5C and if SCL then 0x5D
-  if (!cap.begin(0x5A)) {
-    // Serial.println("MPR121 not found, check wiring?");
-    while (1);
-  }
-  // Serial.println("MPR121 found!");
-}
-
-uint8_t curr_pass[MAX_PASS_SIZE];
-
-uint8_t counter = 0;
-uint16_t last_time = millis(); 
-
-bool check_pass()
-{
-    for (int i = 0; i < PASS_SIZE; i++){
-        if(curr_pass[i]!=password[i])
-            return false;
-        delayMicroseconds(5); 
+    bool operator==(const Point& p1) const{ // implementation of point comparison
+        return x == p1.x && y == p1.y;
     }
-    return counter <= PASS_SIZE;  // because he might give the password+some other stuff
-}
 
-
-void manage_wrong_pass()
-{
-  digitalWrite(RED_LED, HIGH);
-  // Serial.print("Wrong!\n");
-}
-
-void manage_good_pass()
-{
-	digitalWrite(GREEN_LED, HIGH);
-	// Serial.print("Well done!\n");
-}
-
-void manage_overflow()
-{
-  	digitalWrite(RED_LED, HIGH);
-  //	Serial.print("Too much characters!\n");     
-}
-
-void manage_reset()
-{
-	// Serial.println("reset button");
-	digitalWrite(GREEN_LED, LOW);
-  	digitalWrite(RED_LED, LOW);
-    delay(200);
-    digitalWrite(RED_LED, HIGH);
-    delay(200);
-    digitalWrite(RED_LED, LOW);
-    delay(200);
-    digitalWrite(RED_LED, HIGH);
-    delay(200);
-    digitalWrite(RED_LED, LOW);
-}
-
-void manage_initialize_password() 
-{
-    
-  	digitalWrite(RED_LED, LOW);
-    delay(200);
-    digitalWrite(RED_LED, HIGH);
-    delay(200);
-    digitalWrite(RED_LED, LOW);
-    delay(200);
-    digitalWrite(RED_LED, HIGH);
-    delay(200);
-    digitalWrite(RED_LED, LOW);
-
-
-  int count=0;
-
-  do
-  {
-      // reset our state
-    last_touched = curr_touched;      
-    // Get the currently touched pads
-    curr_touched = cap.touched();
-     for (uint8_t i=0; i<12; i++) {
-      // it if is touched and wasnt touched before, alert!
-      if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
-        password[count] = real_to_fake_keypad[i];
-      //  Serial.println(real_to_fake_keypad[i]);
-        count++;
-        break;
-      }
-     }
-  } while (count!=PASS_SIZE);
-  
-    Serial.print("new password set:");
-    for (int i = 0; i < PASS_SIZE; i++){
-        Serial.print(password[i]); Serial.print(" ");
+    void print(){
+        SerialESP32.print(this->x); SerialESP32.print(" "); SerialESP32.println(this->y);
     }
-    Serial.println();
 
-    digitalWrite(GREEN_LED, HIGH);
-    delay(200);
-    digitalWrite(GREEN_LED, LOW);
-
-}
-
-void loop() {
-  
- 	// Get the currently touched pads
-  	curr_touched = cap.touched();
-  
-  	if(curr_touched != last_touched) 
-		switch (curr_touched)
-		{
-		case INITIALIZE_VALUE: // initialize password
-			Serial.println("initialize password");
-			manage_initialize_password();
-			last_time = millis();	
-			
-			counter=0;	
-			break;
-		
-		case ENTER_BUTTON: // enter button
-		//	Serial.println("e");
-			if(check_pass() && counter!=0)
-				manage_good_pass();
-			else
-				manage_wrong_pass();
-			counter=0;
-			last_touched=curr_touched;		
-			break;
-		
-		case RESET_BUTTON: // reset button
-		    manage_reset();
-			counter=0;
-			last_touched=curr_touched;		
-			break;
-		}
+}Point;
 
 
-  
-// if not touched more than 5 seconds
-	if((uint16_t)(millis())-last_time >= 5000 && counter) // and also end count
+class EllipticCurve{
+    // default values 
+    uint32_t a=4;  //coefficient for elliptic curve
+    uint32_t b=20; //coefficient for elliptic curve
+    uint32_t p=29; //prime number to provide finite field
+
+    const Point InfPoint = {UINT32_MAX, UINT32_MAX};
+
+public:
+    EllipticCurve(){}
+    EllipticCurve(uint32_t _a,uint32_t _b,uint32_t _p):a(_a),b(_b),p(_p){}
+
+
+    // implementation of Adding
+    Point addPoint(const Point& point1, const Point& point2)
     {
-        last_time = millis();
-        counter=0;
-      //  Serial.print("Time Out!\n");
-        delay(10);
+        if (point1.x == point2.x) // next point will be infinity point
+            return InfPoint;    
+        if (point1 == InfPoint) // return the second point
+            return point2;
+        if (point2 == InfPoint) // return the second point
+            return point1;
+        if (point1.x == point2.x && point1.y == point2.y) // the same point
+            return doublingPoint(point1);  
+        Point R;
+        int32_t numerator = point1.y - point2.y;
+        int32_t denominator = point1.x - point2.x;
+        int32_t s = modulo(numerator, p) * modularInverse(denominator, p);
+
+        R.x = s * s - (point1.x + point2.x);
+        R.x = modulo(R.x, p);
+        R.y = s * (point1.x - R.x) - point1.y;
+        R.y = modulo(R.y, p);
+        return R;
     }
-    for (uint8_t i=0; i<12; i++) {
-      // it if is touched and wasnt touched before, alert!
-      if ((curr_touched & _BV(i)) && !(last_touched & _BV(i)) ) {
-        curr_pass[counter] = real_to_fake_keypad[i];
-      //  Serial.println(real_to_fake_keypad[i]);
-        counter++;
-        last_time = millis();
-        digitalWrite(RED_LED, LOW);
-        digitalWrite(GREEN_LED, LOW);
-        break;
-      }
+    
+    // implementation of doubling point, based on 
+    Point doublingPoint(const Point& point)
+    {
+        if (point == InfPoint) // InfPoint+InfPoint = InfPoint
+            return InfPoint;
+        if (point.y == 0) // InfPoint because this is a vertical line
+            return InfPoint;
+        Point R;
+        int32_t numerator = 3 * point.x * point.x + a;
+        int32_t denominator = 2 * point.y;
+        int32_t s = modulo(numerator, p) * modularInverse(denominator, p);
+
+        R.x = s * s - 2 * point.x;
+        R.x = modulo(R.x, p);
+        R.y = s * (point.x - R.x) - point.y;
+        R.y = modulo(R.y, p);
+        return R;
+    }
+        
+    // the function is the vulnerable implementation of the algorithm
+    Point scalarMultiplication(Point P, uint32_t k)
+    {
+        Point R0 = P;
+        byte l = key_length(k);
+        for(int8_t j = l-2; j >= 0; j--)
+        {
+            R0 = doublingPoint(R0);
+            if(bitRead(k, j))
+                R0 = addPoint(R0, P);
+        }
+        return R0;
     }
 
-    if(counter==MAX_PASS_SIZE)
-	{
-		manage_overflow();    
-		counter = 0;
-  	}
-  
-  // reset our state
-  last_touched = curr_touched;
+    // for modularization of the program, that we'll be able to use different implementations
+    Point EllipticCurveCalcPoint(Point P, uint32_t PrivKey)
+    {
+        return scalarMultiplication(P, PrivKey);
+    }
+
+};
+// fix modulo that it will handle properly negative numbers
+uint32_t modulo(int32_t a, int32_t b) {
+    int r = a % b;
+    return r >= 0 ? r : r + b;
+}
+
+
+// Function to calculate gcd(a, b) using Euclidean algorithm
+int gcdExtended(int a, int b, int *x, int *y) {
+    // Base case
+    if (a == 0) {
+        *x = 0, *y = 1;
+        return b;
+    }
+
+    int x1, y1; // To store results of recursive call
+    int gcd = gcdExtended(b % a, a, &x1, &y1);
+
+    // Update x and y using results of recursive call
+    *x = y1 - (b / a) * x1;
+    *y = x1;
+
+    return gcd;
+}
+
+// Function to find modular inverse of a under modulo p
+int modularInverse(int a, int p) {
+    int x, y;
+    int gcd = gcdExtended(a, p, &x, &y);
+
+    if (gcd != 1) {
+        // Modular inverse doesn't exist
+        return -1;
+    } else {
+        // Handling negative x to ensure it's positive
+        int inverse = (x % p + p) % p;
+        return inverse;
+    }
+}
+
+
+// this function calculates the length in bits of the key
+byte key_length(uint32_t k)
+{
+    for (uint8_t i=31; i>=0;i--)
+        if(bitRead(k, i))
+            return i + 1;
+    return 0;
+}
+
+
+Point point;
+char buffer[sizeof(Point)];
+uint32_t privKey = 49;
+uint32_t a = 5;
+uint32_t b = 2;
+uint32_t p = 97;
+EllipticCurve curve(a,b,p);
+
+void setup(){
+    SerialESP32.begin(115200);
+    Serial.begin(115200);
+}
+
+void loop(){
+    if(SerialESP32.available())
+    {
+        // get point from client
+        SerialESP32.readBytes(buffer, sizeof(Point));   
+        memcpy(&point, buffer, sizeof(Point));
+        
+        // send point after algorithm
+        point = curve.EllipticCurveCalcPoint(point, privKey);
+        point.print();
+    }
 }
