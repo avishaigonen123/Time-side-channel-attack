@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <Stream.h>
+#include <Arduino.h>
 
 typedef struct Point{
 	uint32_t x, y;
@@ -11,7 +12,7 @@ typedef struct Point{
         return x == p1.x && y == p1.y;
     }
 
-    void print(Stream* out){
+    void print(Stream* out = &Serial){
         out->print(this->x); out->print(" "); out->println(this->y);
     }
 

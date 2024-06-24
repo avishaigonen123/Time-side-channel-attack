@@ -1,6 +1,7 @@
 #include <Arduino.h>
 #include <SoftwareSerial.h>
-#include "EllipticCurve/EllipticCurve.h"
+#include "shared/EllipticCurve/EllipticCurve.h"
+#include "shared/PointStream/PointStream.h"
 
 // start the software serial, for communication with the ESP32
 SoftwareSerial SerialESP32(6,7);
@@ -10,26 +11,30 @@ uint32_t a = 2;
 uint32_t b = 3;
 uint32_t p = 97;
 EllipticCurve curve(a,b,p);
+PointStream pointStream(&SerialESP32);
 
 Point point;
-char buffer[sizeof(Point)];
+Point res;
+
 
 void setup(){
     SerialESP32.begin(115200);
     Serial.begin(115200);
+	point = {17, 10};
+	curve.EllipticCurveCalcPoint(point, privKey).print();
 }
 
 void loop(){
-    /*if(SerialESP32.available()){
-        // get point from client
-        SerialESP32.readBytes(buffer, sizeof(Point));   
-        memcpy(&point, buffer, sizeof(Point));
-        
-        // send point after algorithm
-        point = curve.EllipticCurveCalcPoint(point, privKey);
-        SerialESP32.write((uint8_t*)&point, sizeof(Point));
-    }*/
-    point = {10, 21};
-    point = curve.EllipticCurveCalcPoint(point, privKey);
-	point.print(&Serial);
+    if(SerialESP32.available()){
+        if(pointStream.Recive(&point)){
+			point.print();
+			res = {17, 86};//curve.EllipticCurveCalcPoint(point, privKey);
+			res.print();
+			pointStream.send(&res);
+			res = {0, 0};
+			point = {0, 0};
+			while(SerialESP32.available()) SerialESP32.read();
+		}
+    }
+
 }

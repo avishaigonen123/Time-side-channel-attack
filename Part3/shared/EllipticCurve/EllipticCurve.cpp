@@ -43,8 +43,11 @@ Point EllipticCurve::scalarMultiplication(Point P, uint32_t k){
     for(int8_t j = l-2; j >= 0; j--)
     {
         R0 = doublingPoint(R0);
-        if(bitRead(k, j))
+        delay(10);
+        if(bitRead(k, j)){
             R0 = addPoint(R0, P);
+            delay(5);
+        }
     }
     return R0;
 }

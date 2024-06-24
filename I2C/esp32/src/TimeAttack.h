@@ -8,9 +8,8 @@ namespace TSCA {
     #define FAIL_PIN GPIO_NUM_27
     #define FAIL_PIN2 12
     #define SUCCESS_PIN 14
-    #define NUM_OF_ITERAIONS 10
-    #define PASS_SIZE 4 
-    const float PROGRESS_INTERVAL = 100.0 / (NUM_OF_ITERAIONS * (PASS_SIZE-1) * 10);
+
+    
     hw_timer_t * timer = NULL;
     volatile uint64_t endTime = 0;
     volatile bool measure = false;
@@ -32,12 +31,9 @@ namespace TSCA {
 
     uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock);
 
-    void TSCALoop(void*);
-
     void theEnd();
 
     void i2cTask(void *parameter) {
-
         while(!Wire.begin(0x5A, SDA, SCL, 400000)){delay(10);}
         Wire.onReceive(onRec_Callback);
         Wire.onRequest(onReq_Callback);
@@ -49,7 +45,22 @@ namespace TSCA {
 
     uint8_t pass[PASS_SIZE];
 
+    typedef struct TSCATaskArg_t {
+        uint16_t numOfIteraions;
+        uint8_t passSize;
+        uint8_t* pass;
+        EventType_t* eventType;
+    } TSCATaskArg_t;
+
     void TSCALoop(void* arg) {
+        if(!arg){
+            log_e("NULL argument");
+            vTaskDelete(NULL);
+        }
+        TSCATaskArg_t* TSCAarg = (TSCATaskArg_t*)arg;
+
+        const float PROGRESS_INTERVAL = 100.0 / (TSCAarg->numOfIteraions * (PASS_SIZE-1) * 10);
+
         pinMode(FAIL_PIN, INPUT);
         pinMode(SUCCESS_PIN, INPUT);
         
@@ -81,7 +92,7 @@ namespace TSCA {
             {
                 uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
                 uint32_t results[10] = {0,0,0,0,0,0,0,0,0,0};
-                for (uint8_t i = 0; i < NUM_OF_ITERAIONS; i++){
+                for (uint8_t i = 0; i < TSCAarg->numOfIteraions; i++){
                     uint32_t max_time = 0;
                     for (uint8_t j = 0; j < 10; j++)
                     {
@@ -116,7 +127,7 @@ namespace TSCA {
             {
                 pass[PASS_SIZE-1] = j;
                 sendPassword(pass, (SemaphoreHandle_t*)arg);
-                progress += PROGRESS_INTERVAL*NUM_OF_ITERAIONS;
+                progress += PROGRESS_INTERVAL*(TSCAarg->numOfIteraions);
                 if (tftTaskHandle != NULL) {
                     TSCA::eventState = INC;
                     xTaskNotifyGive(tftTaskHandle);

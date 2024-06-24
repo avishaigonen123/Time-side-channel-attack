@@ -2,10 +2,13 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "TimeAttack.h"
+#include "esp_event.h"
 #include <TFT_eSPI.h>
 
 using namespace TSCA;
-#define us (uint32_t)(21752 / 360)
+
+esp_event_loop_handle_t eventLoopHandle;
+
 void TFTTask(void* arg){
     TFT_eSPI tft = TFT_eSPI();
     tft.begin();
@@ -96,6 +99,17 @@ void TFTTask(void* arg){
 void setup() {
     Serial.begin(115200);
 
+    esp_event_loop_args_t eventLoopArgs = {
+        .queue_size = 5,
+        .task_name = "eventLoop",
+        .task_priority = 1,
+        .task_stack_size = 1000,
+        .task_core_id = 0
+    };
+    
+    esp_event_loop_create(&eventLoopArgs, &eventLoopHandle);
+    
+    
     xTaskCreatePinnedToCore(
 		TFTTask,
         "TFT",
