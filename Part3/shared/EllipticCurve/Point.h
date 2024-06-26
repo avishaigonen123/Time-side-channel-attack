@@ -5,7 +5,7 @@
 #include <Stream.h>
 #include <Arduino.h>
 
-typedef struct Point{
+typedef struct __attribute__ ((packed)) Point{
 	uint32_t x, y;
 
     bool operator==(const Point& p1) const{ // implementation of point comparison

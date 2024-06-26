@@ -16,7 +16,6 @@ void loop(){
         point.x = Serial.parseInt();
         Serial.read(); // dump the space
         point.y = Serial.parseInt();
-        point.print();
         bool good = false;
         uint64_t lastTime;
         Point res;
@@ -26,10 +25,14 @@ void loop(){
             while(!Serial2.available());
             lastTime = micros() - lastTime;
             res = {0, 0};
-            good = pointStream.Recive(&res) && lastTime > 200;
+            good = pointStream.Recive(&res) && lastTime > 20;
         }
 
-        Serial.printf("%" PRIu64 ",%" PRId32 ",%" PRId32 "\n", lastTime, res.x, res.y);
-        while(Serial.available()) Serial.read(); // dump the rest
+        Serial.printf("%" PRIu64 "\n", lastTime);
+        // dump the rest
+        byte* garbeg = new byte[Serial.available()];
+        Serial.readBytes(garbeg, Serial.available());
+        delete[] garbeg;
+        garbeg = nullptr;
     }
 }

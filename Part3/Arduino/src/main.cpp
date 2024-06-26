@@ -27,13 +27,16 @@ void setup(){
 void loop(){
     if(SerialESP32.available()){
         if(pointStream.Recive(&point)){
-			point.print();
-			res = {17, 86};//curve.EllipticCurveCalcPoint(point, privKey);
-			res.print();
+			//point.print();
+			res = curve.EllipticCurveCalcPoint(point, privKey);
+			//res.print();
 			pointStream.send(&res);
 			res = {0, 0};
 			point = {0, 0};
-			while(SerialESP32.available()) SerialESP32.read();
+			byte* garbeg = new byte[SerialESP32.available()];
+			SerialESP32.readBytes(garbeg, SerialESP32.available());
+			delete[] garbeg;
+			garbeg = nullptr;
 		}
     }
 

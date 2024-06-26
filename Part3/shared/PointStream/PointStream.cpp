@@ -23,29 +23,50 @@ bool PointStream::checkCRC(uint8_t *buff){
     // Serial.println(crc);
     return buff[sizeof(Point)] == crc;
 }
+
+void printBuff(const char* TAG, uint8_t *buff, size_t size){
+    Serial.print(TAG);
+    Serial.print(": ");
+    if (size == 0)
+        return; 
+    Serial.print(buff[0], HEX);
+    for (size_t i = 1; i < size; i++){
+        Serial.print(" ");
+        Serial.print(buff[i], HEX);
+    }
+    Serial.println();
+}
+
 void PointStream::send(Point* source){
     uint8_t buff[PACKET_SIZE];
+    memset(buff, 0, PACKET_SIZE);
     buff[0] = START_SEQUENCE;
     memcpy(&(buff[1]), source, sizeof(Point));
     addCRC(&(buff[1]));
     buff[PACKET_SIZE-1] = STOP_SEQUENCE;
-    for (size_t i = 0; i < PACKET_SIZE; i++){
-        Serial.print(buff[i]);
-        Serial.print(" ");
-    }
-    Serial.println();
     stream->write(buff, PACKET_SIZE);
 }
 
 bool PointStream::Recive(Point* dest)
 {
     uint8_t buff[DATA_SIZE];
-    if(stream->read() != START_SEQUENCE)
+    memset(buff, 0, DATA_SIZE);
+    //printBuff("R1",buff, DATA_SIZE);
+
+    while(stream->available() && stream->read() != START_SEQUENCE);
+    if (stream->available() == 0)
         return false;
-    stream->readBytesUntil(STOP_SEQUENCE, buff, DATA_SIZE);
+    //printBuff("R2",buff, DATA_SIZE);
+
+    stream->readBytes(buff, DATA_SIZE);
+
+    //printBuff("R3",buff, DATA_SIZE);
+
     if(!checkCRC(buff))
         return false;
+
     memcpy(dest, buff, sizeof(Point));
+
     return true;
 }
 
