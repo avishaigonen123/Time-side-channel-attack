@@ -1,11 +1,13 @@
-from asyncio import sleep
-import random
+import time
 import serial
 
 def sendPoint(point, ser):
     ser.write((f"{point[0]} {point[1]}\n").encode())
-    sleep(0.000001)
-    return int(ser.readline().decode().strip())
+    while ser.in_waiting == 0:
+        time.sleep(0.00001)  # Small delay to avoid busy-waiting
+    ans1 = ser.readline().decode()
+    ans = ans1.strip()
+    return int(ans)
 
 def main():
     # Open a serial port
@@ -15,7 +17,6 @@ def main():
             baudrate=115200,
             timeout=1
         )
-
         # Check if the serial port is open
         if ser.is_open:
             print("Serial port is open.")
@@ -43,8 +44,6 @@ def generateEllipticCurve(a, b, n):
                 res.append((x,y))
     return res
 
-def generateRandomPoint():
-    return (random.randint(0, 100), random.randint(0, 100))
 def generatePoints(file, ser):
     curve = generateEllipticCurve(2, 3, 97)
     for i in range(len(curve)):
@@ -53,8 +52,8 @@ def generatePoints(file, ser):
         for _ in range(5):
             t += sendPoint(point, ser)
         t /= 5
-        file.write(f"{t} {point[0]} {point[1]}\n")
+        file.write(f"{point[0]} {point[1]} {t}\n")
         print(f"Sent point: {point}")
 
-sleep(1)
+time.sleep(1)
 main()

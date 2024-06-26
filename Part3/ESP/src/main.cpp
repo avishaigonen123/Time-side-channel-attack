@@ -30,9 +30,9 @@ void loop(){
 
         Serial.printf("%" PRIu64 "\n", lastTime);
         // dump the rest
-        byte* garbeg = new byte[Serial.available()];
+        /*byte* garbeg = new byte[Serial.available()];
         Serial.readBytes(garbeg, Serial.available());
         delete[] garbeg;
-        garbeg = nullptr;
+        garbeg = nullptr;*/
     }
 }
