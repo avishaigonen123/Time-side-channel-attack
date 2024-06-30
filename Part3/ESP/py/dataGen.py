@@ -1,5 +1,9 @@
 import time
 import serial
+import datetime
+
+def timeStr():
+    return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 def sendPoint(point, ser):
     ser.write((f"{point[0]} {point[1]}\n").encode())
@@ -17,13 +21,16 @@ def main():
             baudrate=115200,
             timeout=1
         )
+        print("waiting for reboot...")
+        time.sleep(0.5)
+        print("done.")
         # Check if the serial port is open
         if ser.is_open:
             print("Serial port is open.")
 
         # Open file for writing
-        with open("data.txt", "w") as file:
-            file.write("X cord  |  Y cord  |  time[us]\n")
+        with open(f"data/data_{timeStr()}.txt", "w") as file:
+            file.write("X cord  |  Y cord  |  time[ms]\n")
             generatePoints(file, ser)
             # Send point and write response to file
             
@@ -55,5 +62,4 @@ def generatePoints(file, ser):
         file.write(f"{point[0]} {point[1]} {t}\n")
         print(f"Sent point: {point}")
 
-time.sleep(1)
 main()

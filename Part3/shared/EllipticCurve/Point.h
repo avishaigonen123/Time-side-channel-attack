@@ -13,7 +13,10 @@ typedef struct __attribute__ ((packed)) Point{
     }
 
     void print(Stream* out = &Serial){
-        out->print(this->x); out->print(" "); out->println(this->y);
+        out->print(x);
+        out->print(",");
+        out->print(y);
+		out->println();
     }
 
 }Point;

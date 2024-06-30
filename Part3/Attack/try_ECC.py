@@ -6,7 +6,7 @@ class Point:
         if x is None and y is None:
             self.x = random.randint(1, p)
             x = self.x
-            self.y = int(math.sqrt(pow(x, 3) + a*x + b)) % p
+            self.y = int(math.sqrt(pow(x, 3, p) + a*x + b)) % p
             if self.y == 0:
                 self.y = random.randint(1, p)
             # self.y = random.randint(1, p)
@@ -46,17 +46,23 @@ class Point:
         y3 = (lam * (self.x - x3) - self.y) % self.p
         return Point(x3, y3)
 
+def generateEllipticCurve(a, b, n):
+    res = []
+    for x in range(n):
+        for y in range(n):
+            if((y*y) % n == (x**3 + x*a + b) % n):
+                res.append((x,y))
+    return res
 # Elliptic curve parameters
-p = 10007
+p = 5003
 a = 2
 b = 2
-G = (5, 1)  # Base point (generator)
 
 
 # Generate a random point on the elliptic curve
 Z = set()
 Y = set()
-points = [Point() for _ in range(12000)]
+points = [Point(i[0], i[1]) for i in generateEllipticCurve(a, b, p)]
 
 for P in points:
     xP, yP = P.x, P.y
@@ -71,9 +77,14 @@ for P in points:
         xR0 = pow(s, 2) - (xP + xQ)
         yR0 = s * (xP - xR0) - yP
         if yR0 < p and xR0 < p:
-            Y.add(Point(xR0, yR0))
+            Y.add((P.x, P.y))
         else:
-            Z.add(Point(xR0, yR0))
-
+            Z.add((P.x, P.y))
+print(p)
 print(len(Z))
+for i in Z:
+    print(i)
 print(len(Y))
+for i in Y:
+    print(i)
+
