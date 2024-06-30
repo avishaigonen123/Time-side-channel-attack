@@ -5,10 +5,10 @@
 // start the software serial, for communication with the ESP32
 SoftwareSerial SerialESP32(6,7);
 
-uint32_t privKey = 31;
+uint32_t privKey = 0xBA;
 uint32_t a = 2;
 uint32_t b = 3;
-uint32_t p = 97;
+uint32_t p = 5003;
 EllipticCurve curve(a,b,p);
 
 Point point;

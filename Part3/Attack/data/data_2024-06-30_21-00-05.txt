@@ -1,0 +1,1 @@
+X cord  |  Y cord  |  time[ms]

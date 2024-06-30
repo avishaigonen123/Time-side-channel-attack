@@ -2,6 +2,7 @@
 #include <math.h>
 #include "shared/EllipticCurve/Point.h"
 
+
 void setup(){
     Serial2.begin(115200);
     Serial.begin(115200);

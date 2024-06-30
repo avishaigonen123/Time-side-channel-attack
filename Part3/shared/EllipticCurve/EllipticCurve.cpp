@@ -13,12 +13,12 @@ Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
     Point R;
     int32_t numerator = point1.y - point2.y;
     int32_t denominator = point1.x - point2.x;
-    int32_t s = special_modulo(numerator, p) * modularInverse(denominator, p);
+    int32_t s = special_module(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - (point1.x + point2.x);
-    R.x = modulo(R.x, p);
+    R.x = module(R.x, p);
     R.y = s * (point1.x - R.x) - point1.y;
-    R.y = modulo(R.y, p);
+    R.y = module(R.y, p);
     return R;
 }
 Point EllipticCurve::doublingPoint(const Point& point){
@@ -29,12 +29,12 @@ Point EllipticCurve::doublingPoint(const Point& point){
     Point R;
     int32_t numerator = 3 * point.x * point.x + a;
     int32_t denominator = 2 * point.y;
-    int32_t s = special_modulo(numerator, p) * modularInverse(denominator, p);
+    int32_t s = special_module(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - 2 * point.x;
-    R.x = modulo(R.x, p);
+    R.x = module(R.x, p);
     R.y = s * (point.x - R.x) - point.y;
-    R.y = modulo(R.y, p);
+    R.y = module(R.y, p);
     return R;
 }
 Point EllipticCurve::scalarMultiplication(Point P, uint32_t k){
@@ -43,10 +43,8 @@ Point EllipticCurve::scalarMultiplication(Point P, uint32_t k){
     for(int8_t j = l-2; j >= 0; j--)
     {
         R0 = doublingPoint(R0);
-        delay(10);
         if(bitRead(k, j)){
             R0 = addPoint(R0, P);
-            delay(5);
         }
     }
     return R0;
@@ -83,8 +81,7 @@ int EllipticCurve::modularInverse(int a, int p) {
         return -1;
     } else {
         // Handling negative x to ensure it's positive
-        int inverse = (x % p + p) % p;
-        return inverse;
+        return (x % p + p) % p;
     }
 }
 
@@ -98,17 +95,16 @@ byte EllipticCurve::key_length(uint32_t k)
     return 0;
 }
 
-uint32_t EllipticCurve::modulo(int32_t a, int32_t b) {
+uint32_t EllipticCurve::module(int32_t a, int32_t b) {
     int r = a % b;
-    while (r < 0)
+    if (r < 0)
         r += b;
-    
     return r;
 }
 
 
-uint32_t EllipticCurve::special_modulo(int32_t a, int32_t b) {
-    if(a > b)
+uint32_t EllipticCurve::special_module(int32_t a, int32_t b) {
+    if(a < 0)
         delay(5); // some special staff bro
-    return modulo(a, b);
+    return module(a, b);
 }
