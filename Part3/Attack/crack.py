@@ -143,7 +143,6 @@ def main():
         If not, it means that our current bit is 0.
         '''
 
-
         average_not_modulo_at_all, average_modulo_after_1_stage = calculate_averages(not_modulo_at_all, modulo_after_1_stage)
 
         if average_modulo_after_1_stage - average_not_modulo_at_all > DELTA:
