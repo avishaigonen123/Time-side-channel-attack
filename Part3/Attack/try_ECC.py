@@ -56,7 +56,7 @@ def generateEllipticCurve(a, b, n):
 # Elliptic curve parameters
 p = 5003
 a = 2
-b = 2
+b = 3
 
 
 # Generate a random point on the elliptic curve

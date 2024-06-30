@@ -13,7 +13,7 @@ Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
     Point R;
     int32_t numerator = point1.y - point2.y;
     int32_t denominator = point1.x - point2.x;
-    int32_t s = modulo(numerator, p) * modularInverse(denominator, p);
+    int32_t s = special_modulo(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - (point1.x + point2.x);
     R.x = modulo(R.x, p);
@@ -29,7 +29,7 @@ Point EllipticCurve::doublingPoint(const Point& point){
     Point R;
     int32_t numerator = 3 * point.x * point.x + a;
     int32_t denominator = 2 * point.y;
-    int32_t s = modulo(numerator, p) * modularInverse(denominator, p);
+    int32_t s = special_modulo(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - 2 * point.x;
     R.x = modulo(R.x, p);
@@ -73,7 +73,7 @@ int EllipticCurve::gcdExtended(int a, int b, int *x, int *y) {
     return gcd;
 }
 
-// Function to find modular inverse of a under modulo p
+// Function to find modular inverse of a under regular_modulo p
 int EllipticCurve::modularInverse(int a, int p) {
     int x, y;
     int gcd = gcdExtended(a, p, &x, &y);
@@ -99,8 +99,16 @@ byte EllipticCurve::key_length(uint32_t k)
 }
 
 uint32_t EllipticCurve::modulo(int32_t a, int32_t b) {
-    if(a > b)
-        delay(5);
     int r = a % b;
-    return r < 0 ? r + b : r;
+    while (r < 0)
+        r += b;
+    
+    return r;
+}
+
+
+uint32_t EllipticCurve::special_modulo(int32_t a, int32_t b) {
+    if(a > b)
+        delay(5); // some special staff bro
+    return modulo(a, b);
 }

@@ -2,35 +2,27 @@ import random
 import math
 
 # TODO: set real values to this DELTA 
-DELTA = 0.01 # this is the difference between the two groups
+DELTA = 0.1 # this is the difference between the two groups
 
 # TODO: set key size
-KEY_SIZE = 20
+KEY_SIZE = 8
 
 # Elliptic curve parameters
 # TODO: set real values to this parameters
-p = 10007
+p = 97
 a = 2
-b = 2
+b = 3
 
 class Point:
     # TODO: implement the functions that they will work
-    def __init__(self, x=None, y=None):
-        if x is None and y is None:
-            self.x = random.randint(1, p)
-            x = self.x
-            self.y = int(math.sqrt(pow(x, 3) + a*x + b)) % p
-            if self.y == 0:
-                self.y = random.randint(1, p)
-            # self.y = random.randint(1, p)
-        else:
-            self.x = x
-            self.y = y
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
     def __str__(self):
         return f"({self.x}, {self.y})"
     
-    def __add__(self, other):
+    '''def __add__(self, other):
         # Check if points are equal
         if self.x == other.x and self.y == other.y:
             return self.double()  # Point doubling
@@ -57,8 +49,56 @@ class Point:
         lam = (3 * self.x ** 2 + self.curve_a) * pow(2 * self.y, -1, self.p) % self.p
         x3 = (lam ** 2 - 2 * self.x) % self.p
         y3 = (lam * (self.x - x3) - self.y) % self.p
-        return Point(x3, y3)
-    
+        return Point(x3, y3)'''
+
+
+'''
+    Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
+{
+    if (point1.x == point2.x) // next point will be infinity point
+        return InfPoint;    
+    if (point1 == InfPoint) // return the second point
+        return point2;
+    if (point2 == InfPoint) // return the second point
+        return point1;
+    if (point1.x == point2.x && point1.y == point2.y) // the same point
+        return doublingPoint(point1);  
+    Point R;
+    int32_t numerator = point1.y - point2.y;
+    int32_t denominator = point1.x - point2.x;
+    int32_t s = modulo(numerator, p) * modularInverse(denominator, p);
+
+    R.x = s * s - (point1.x + point2.x);
+    R.x = modulo(R.x, p);
+    R.y = s * (point1.x - R.x) - point1.y;
+    R.y = modulo(R.y, p);
+    return R;
+}
+
+Point EllipticCurve::doublingPoint(const Point& point){
+    if (point == InfPoint) // InfPoint+InfPoint = InfPoint
+        return InfPoint;
+    if (point.y == 0) // InfPoint because this is a vertical line
+        return InfPoint;
+    Point R;
+    int32_t numerator = 3 * point.x * point.x + a;
+    int32_t denominator = 2 * point.y;
+    int32_t s = modulo(numerator, p) * modularInverse(denominator, p);
+
+    R.x = s * s - 2 * point.x;
+    R.x = modulo(R.x, p);
+    R.y = s * (point.x - R.x) - point.y;
+    R.y = modulo(R.y, p);
+    return R;
+}
+
+uint32_t EllipticCurve::modulo(int32_t a, int32_t b) {
+    if(a > b)
+        delay(5);
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
+'''
 
 def not_modulo_stage_doubling(P):
     # TODO: implement not_modulo_stage_doubling
@@ -100,18 +140,13 @@ def cluster_points(points_to_times):
     
     return modulo_after_1_stage, not_modulo_at_all
 
-def calculate_averages(not_modulo_at_all, modulo_after_1_stage):
-    average_not_modulo_at_all = 0
-    for time in not_modulo_at_all.values():
-        average_not_modulo_at_all += time
-    average_not_modulo_at_all /= len(not_modulo_at_all)
+def calculate_averages(cluster):
+    average_cluster = 0
+    for time in cluster.values():
+        average_cluster += time
+    average_cluster /= len(cluster)
 
-    average_modulo_after_1_stage = 0
-    for time in modulo_after_1_stage.values():
-        average_modulo_after_1_stage += time
-    average_modulo_after_1_stage /= len(modulo_after_1_stage)
-
-    return average_not_modulo_at_all, average_modulo_after_1_stage
+    return average_cluster
 
 
 
@@ -127,7 +162,7 @@ def main():
     
     for line in data.split('\n'):
         x, y, time = line.split(' ')
-        points_to_times[Point(x,y)] = time
+        points_to_times[Point(int(x),int(y))] = float(time)
     
     modulo_after_1_stage = {} # dictionary of points that did modulo after 1 stage
     not_modulo_at_all = {} # dictionary of points that were not modulo at all
@@ -143,15 +178,17 @@ def main():
         If not, it means that our current bit is 0.
         '''
 
-        average_not_modulo_at_all, average_modulo_after_1_stage = calculate_averages(not_modulo_at_all, modulo_after_1_stage)
+        average_not_modulo_at_all = calculate_averages(not_modulo_at_all)
+        average_modulo_after_1_stage = calculate_averages(modulo_after_1_stage)
 
         if average_modulo_after_1_stage - average_not_modulo_at_all > DELTA:
             key_bits += [1]
         else:
             key_bits += [0]
 
-        promote_points(points_to_times, key_bits[::-1]) # promote points, according to the last bit found
-
+        promote_points(points_to_times, key_bits[:-1]) # promote points, according to the last bit found
+    
+    print(f"found key! {hex(key_bits)}")
 
 if __name__ == "__main__":
     main()
