@@ -11,6 +11,7 @@ class EllipticCurve{
     int gcdExtended(int a, int b, int *x, int *y);
     int modularInverse(int, int);
     uint32_t modulo(int32_t, int32_t);
+    uint32_t special_modulo(int32_t, int32_t);
     uint8_t key_length(uint32_t);
 public:
     const Point InfPoint = {UINT32_MAX, UINT32_MAX};

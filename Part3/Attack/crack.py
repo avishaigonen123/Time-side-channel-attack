@@ -74,6 +74,7 @@ class Point:
     R.y = modulo(R.y, p);
     return R;
 }
+
 Point EllipticCurve::doublingPoint(const Point& point){
     if (point == InfPoint) // InfPoint+InfPoint = InfPoint
         return InfPoint;
@@ -91,7 +92,12 @@ Point EllipticCurve::doublingPoint(const Point& point){
     return R;
 }
 
-
+uint32_t EllipticCurve::modulo(int32_t a, int32_t b) {
+    if(a > b)
+        delay(5);
+    int r = a % b;
+    return r < 0 ? r + b : r;
+}
 '''
 
 def not_modulo_stage_doubling(P):
