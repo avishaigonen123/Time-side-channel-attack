@@ -1,3 +1,5 @@
+
+# class to present a point
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -13,7 +15,7 @@ class Point:
     def __hash__(self):
         return hash((self.x, self.y))
 
-
+# class to present Elliptic Curve
 class EllipticCurve:
     def __init__(self, a, b, p):
         self.p = p
@@ -22,9 +24,9 @@ class EllipticCurve:
         self.InfPoint = Point(-1, -1)
 
     def addPoint(self, point1, point2):
-        if point1.x == point2.x:
+        if point1.x == point2.x: # vertical
             return self.InfPoint
-        if point1 == self.InfPoint:
+        if point1 == self.InfPoint: 
             return point2
         if point2 == self.InfPoint:
             return point1
@@ -86,20 +88,20 @@ class EllipticCurve:
 
     def key_length(self, k):
         for i in range(31, -1, -1):
-            if (k >> i) & 1:
+            if (k >> i) & 1: # reach the first non-zero bit
                 return i + 1
         return 0
 
     def module(self, a, b):
         r = a % b
-        while r < 0:
+        if r < 0: 
             r += b
         return r
 
+# Example usage
 if __name__ == "__main__":
-    # Example usage
-    curve = EllipticCurve(p=17, a=2)
-    P = Point(5, 1)
+    curve = EllipticCurve(a=2, b=3, p=1739)
+    P = Point(12, 4)
     PrivKey = 123456789
     result = curve.EllipticCurveCalcPoint(P, PrivKey)
     print(result)
