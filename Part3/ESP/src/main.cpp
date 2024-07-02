@@ -4,30 +4,33 @@
 
 
 void setup(){
-    Serial2.begin(115200);
+    SerialArduino.begin(115200);
     Serial.begin(115200);
 }
 
 void loop(){
     if(Serial.available()){
+        // it receives points from the server (PC)
         Point point;
         point.x = Serial.parseInt();
         Serial.read(); // dump the space
         point.y = Serial.parseInt();
 		Serial.read(); // dump the newline
 
-        point.print(&Serial2);
+        // send the point to the arduino
+        point.print(&SerialArduino);
 
+        // check how much time it takes to calculate the new point
         uint64_t lastTime = millis();
-        while(!Serial2.available());
+        while(!SerialArduino.available());
         lastTime = millis() - lastTime;
 
+        // print to serial the time it took to calculate the new point
         Serial.printf("%" PRIu64 "\n", lastTime);
 
         // cleanup for next iteration
-        
-        byte* garbeg = new byte[Serial2.available()];
-        Serial2.readBytes(garbeg, Serial2.available());
+        byte* garbeg = new byte[SerialArduino.available()];
+        SerialArduino.readBytes(garbeg, SerialArduino.available());
         delete[] garbeg;
 
         garbeg = new byte[Serial.available()];

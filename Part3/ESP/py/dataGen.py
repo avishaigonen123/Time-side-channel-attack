@@ -31,8 +31,8 @@ def main():
         # Open file for writing
         with open(f"data/data_{timeStr()}.txt", "w") as file:
             file.write("X cord  |  Y cord  |  time[ms]\n")
-            generatePoints(file, ser)
             # Send point and write response to file
+            generatePoints(file, ser)
             
 
     except serial.SerialException as e:
@@ -43,7 +43,9 @@ def main():
         if ser.is_open:
             ser.close()
             print("Serial port closed.")
-def generateEllipticCurve(a, b, n):
+
+# generate the points on the elliptic curve
+def generateEllipticCurvePoints(a, b, n):
     res = []
     for x in range(n):
         for y in range(n):
@@ -52,14 +54,19 @@ def generateEllipticCurve(a, b, n):
     return res
 
 def generatePoints(file, ser):
-    curve = generateEllipticCurve(2, 3, 97)
-    for i in range(len(curve)):
-        point = curve[i]
+    print("Generating points...")
+    curve_points = generateEllipticCurvePoints(2, 3, 97) # curve has all points on the curve
+    
+    print("Sending points...")
+    for point in curve_points: # iterate over all points
         t = 0
-        for _ in range(5):
-            t += sendPoint(point, ser)
+        # send each point 5 times, and take average calculation time
+        for _ in range(5): 
+            t += sendPoint(point, ser) 
         t /= 5
-        file.write(f"{point[0]} {point[1]} {t}\n")
+        file.write(f"{point[0]} {point[1]} {t}\n") # write to the file the results
         print(f"Sent point: {point}")
 
-main()
+
+if __name__ == '__main__':
+    main()
