@@ -81,7 +81,7 @@ namespace TSCA {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         delay(500);
         reset();
-        relaese();
+        release();
         delay(3000);
         const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
         // generate the password each loop iteration
@@ -184,7 +184,7 @@ namespace TSCA {
     {
         for (uint8_t i = 0; i < PASS_SIZE; i++){
             touch(password[i]);
-            relaese();
+            release();
         }
 
         enter();
