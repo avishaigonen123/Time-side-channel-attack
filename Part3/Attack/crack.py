@@ -5,6 +5,7 @@ import os
 import re
 from datetime import datetime
 
+# function that returns the most recent data file
 def get_most_recent_file(directory):
     # Regular expression to match the date and time in the filename
     pattern = re.compile(r'data_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.txt')
@@ -40,7 +41,7 @@ b = 3
 curve = EllipticCurve(a, b, p)
 
 def not_modulo_stage_doubling(P):
-    return True # not negetive always
+    return True # not negative always
 
 def not_modulo_stage_adding(P):
     # TODO: implement not_modulo_stage_adding
@@ -111,10 +112,10 @@ def main():
     while not len(key_bits) == KEY_SIZE:
        # first, cluster the points
         modulo_after_1_stage, not_modulo_at_all = cluster_points(points_to_times) 
-        '''now, i have my dictionaries, all left is to analyze the difference
-        assume our current bit is 1, so the difference between the average of each group should be significant.
-        If not, it means that our current bit is 0.
-        '''
+        
+        # now, i have my dictionaries, all left is to analyze the difference 
+        # assume our current bit is 1, so the difference between the average of each group should be significant.
+        # If not, it means that our current bit is 0.
 
         average_not_modulo_at_all = calculate_averages(not_modulo_at_all)
         average_modulo_after_1_stage = calculate_averages(modulo_after_1_stage)

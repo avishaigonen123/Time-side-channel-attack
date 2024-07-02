@@ -1,5 +1,7 @@
 #include "EllipticCurve.h"
 #include <Arduino.h>
+
+// Function that performs point adding
 Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
 {
     if (point1.x == point2.x) // next point will be infinity point
@@ -21,6 +23,8 @@ Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
     R.y = module(R.y, p);
     return R;
 }
+
+// Function that performs point doubling
 Point EllipticCurve::doublingPoint(const Point& point){
     if (point == InfPoint) // InfPoint+InfPoint = InfPoint
         return InfPoint;
@@ -29,7 +33,7 @@ Point EllipticCurve::doublingPoint(const Point& point){
     Point R;
     int32_t numerator = 3 * point.x * point.x + a;
     int32_t denominator = 2 * point.y;
-    int32_t s = special_module(numerator, p) * modularInverse(denominator, p);
+    int32_t s = module(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - 2 * point.x;
     R.x = module(R.x, p);
@@ -37,20 +41,24 @@ Point EllipticCurve::doublingPoint(const Point& point){
     R.y = module(R.y, p);
     return R;
 }
+
+// Function that implements montgomery algorithm
 Point EllipticCurve::scalarMultiplication(Point P, uint32_t k){
     Point R0 = P;
     byte l = key_length(k);
     for(int8_t j = l-2; j >= 0; j--)
     {
         R0 = doublingPoint(R0);
-        if(bitRead(k, j)){
+        if(bitRead(k, j)){ // if k[j] == 1
             R0 = addPoint(R0, P);
         }
     }
     return R0;
 }
+
+// Function to calculate the point on the elliptic curve given the private key
 Point EllipticCurve::EllipticCurveCalcPoint(Point P, uint32_t PrivKey){
-    return scalarMultiplication(P, PrivKey);
+    return scalarMultiplication(P, PrivKey); // use the scalar multiplication algorithm
 }
 
 // Function to calculate gcd(a, b) using Euclidean algorithm
@@ -85,7 +93,6 @@ int EllipticCurve::modularInverse(int a, int p) {
     }
 }
 
-
 // this function calculates the length in bits of the key
 byte EllipticCurve::key_length(uint32_t k)
 {
@@ -95,6 +102,7 @@ byte EllipticCurve::key_length(uint32_t k)
     return 0;
 }
 
+// simple modulo
 uint32_t EllipticCurve::module(int32_t a, int32_t b) {
     int r = a % b;
     if (r < 0)
@@ -102,9 +110,11 @@ uint32_t EllipticCurve::module(int32_t a, int32_t b) {
     return r;
 }
 
-
+// special modulo
 uint32_t EllipticCurve::special_module(int32_t a, int32_t b) {
     if(a < 0)
-        delay(5); // some special staff bro
+    {
+        delay(5); // handle negative numbers
+    }
     return module(a, b);
 }
