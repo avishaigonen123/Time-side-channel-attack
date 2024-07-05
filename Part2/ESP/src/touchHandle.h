@@ -1,3 +1,5 @@
+#pragma once
+
 #include <Arduino.h>
 
 namespace Touch{
@@ -32,6 +34,6 @@ namespace Touch{
         state = ENTER_BUTTON;
     }
 
-    volatile uint8_t data[4];
+
 
 }

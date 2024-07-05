@@ -2,9 +2,9 @@
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
 #include "TimeAttack.h"
+#include "I2cTask.h"
 #include <TFT_eSPI.h>
 
-using namespace TSCA;
 #define us (uint32_t)(21752 / 360)
 void TFTTask(void* arg){
     TFT_eSPI tft = TFT_eSPI();
@@ -18,7 +18,7 @@ void TFTTask(void* arg){
         for (size_t i = 0; i <= 360; i+=1){
             tft.drawArc(128/2, 128/2, 50, 45, 0, i, TFT_GREENYELLOW + 0x1111 * color, TFT_BLACK);
             ulTaskNotifyTake(pdTRUE, 1 / portTICK_PERIOD_MS);
-            if(TSCA::eventState == FOUND_I2C)
+            if(TSCA::eventState == TSCA::FOUND_I2C)
                 goto exit;
         }
         color++;
@@ -47,9 +47,9 @@ void TFTTask(void* arg){
         //Serial.println("hi");
         switch (TSCA::eventState)
         {
-        case FINISHED_BATCH:
+        case TSCA::FINISHED_BATCH:
             for (size_t i = 0; i < index; i++) {
-                buf[i] = '0' + pass[i];
+                buf[i] = '0' + TSCA::pass[i];
             }
             for (size_t i = index; i < PASS_SIZE; i++) {
                 buf[i] = 'X';
@@ -61,9 +61,9 @@ void TFTTask(void* arg){
 
             index++;
             break;
-        case SUCCESS:
+        case TSCA::SUCCESS:
             for (size_t i = 0; i < PASS_SIZE; i++) {
-                buf[i] = '0' + pass[i];
+                buf[i] = '0' + TSCA::pass[i];
             }
             buf[PASS_SIZE] = '\0'; // Null-terminate the string
 
@@ -80,14 +80,14 @@ void TFTTask(void* arg){
             tft.drawArc(128/2, 128/2, 50, 45, 0, 360, TFT_GREENYELLOW, TFT_BLACK);
             tft.drawCentreString("XXXX", textX, textY - textHeight / 2, 1);
             break;
-        case INC:
-            tft.drawArc(128/2, 128/2, 50, 45, 0, (uint16_t)(progress * 3.6), TFT_BLUE, TFT_BLACK);
+        case TSCA::INC:
+            tft.drawArc(128/2, 128/2, 50, 45, 0, (uint16_t)(TSCA::progress * 3.6), TFT_BLUE, TFT_BLACK);
             break;
         
         default:
             break;
         }
-        eventState = NOTHING;
+        TSCA::eventState = TSCA::NOTHING;
     }
 
     vTaskDelete(NULL);
@@ -97,7 +97,7 @@ void setup() {
     Serial.begin(115200);
 
 	xTaskCreatePinnedToCore(
-        i2cTask, 
+        I2CTask::i2cTask, 
         "i2cTask", 
         10000, 
         NULL, 
@@ -105,7 +105,7 @@ void setup() {
         NULL,
         0
     );
-    
+
     xTaskCreatePinnedToCore(
 		TFTTask,
         "TFT",
@@ -117,12 +117,12 @@ void setup() {
 	);
 
 	xTaskCreatePinnedToCore(
-		TSCALoop,
+		TSCA::TSCALoop,
         "TSCA",
         5000,
         NULL,
         100,
-        &(TSCA::TSCATaskHandle),
+        NULL,
 		1
 	);
 

@@ -1,52 +1,29 @@
+#pragma once
+
 #include <Arduino.h>
 #include <Wire.h> 
 #include "touchHandle.h"
+#include "StopWatch.h"
 
-using namespace Touch;
+#define FAIL_PIN GPIO_NUM_27
+#define FAIL_PIN2 12
+#define SUCCESS_PIN 14
+#define NUM_OF_ITERAIONS 20
+#define PASS_SIZE 4 
 
 namespace TSCA {
-    #define FAIL_PIN GPIO_NUM_27
-    #define FAIL_PIN2 12
-    #define SUCCESS_PIN 14
-    #define NUM_OF_ITERAIONS 20
-    #define PASS_SIZE 4 
     const float PROGRESS_INTERVAL = 100.0 / (NUM_OF_ITERAIONS * (PASS_SIZE-1) * 10);
-    hw_timer_t * fastTimer = NULL;
-    hw_timer_t * slowTimer = NULL;
-    volatile uint64_t endTime = 0;
-    volatile bool measure = false;
+    
     typedef enum {NOTHING, FINISHED_BATCH, SUCCESS, FAIL, INC, FOUND_I2C} EventType_t;
     EventType_t eventState = NOTHING;
     float progress = 0;
 
     bool finish = false;
     TaskHandle_t tftTaskHandle = NULL;
-    TaskHandle_t TSCATaskHandle = NULL;
-
-    void IRAM_ATTR stopTimer();
-
-    void IRAM_ATTR startTimer();
-
-    void onRec_Callback(int numOfBytes);
-
-    void onReq_Callback();
 
     uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock);
 
-    void TSCALoop(void*);
-
     void theEnd();
-
-    void i2cTask(void *parameter) {
-
-        while(!Wire.begin(0x5A, SDA, SCL, 400000)){delay(10);}
-        Wire.onReceive(onRec_Callback);
-        Wire.onRequest(onReq_Callback);
-        TSCA::eventState = FOUND_I2C;
-        xTaskNotifyGive(tftTaskHandle);
-        xTaskNotifyGive(TSCATaskHandle);
-        vTaskDelete(NULL);
-    }
 
     uint8_t pass[PASS_SIZE];
 
@@ -55,24 +32,22 @@ namespace TSCA {
         pinMode(SUCCESS_PIN, INPUT);
         
         // Attach interrupts
-        attachInterrupt(digitalPinToInterrupt(FAIL_PIN), stopTimer, RISING);
+        attachInterrupt(digitalPinToInterrupt(FAIL_PIN), StopWatch::stopTimer, RISING);
         attachInterrupt(digitalPinToInterrupt(SUCCESS_PIN), theEnd, RISING);
 
         delay(10);
 
         // Initialize the timer
-        fastTimer = timerBegin(0, 2, true); // Use timer 0, prescaler 1 (4.17ns per tick), count up
-        //slowTimer = timerBegin(1, 16, true);
-        for (uint8_t i = 0; i < 4; i++)
-        {
-            data[i] = 0xFF;
-        }
+        StopWatch::init();
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         delay(3000);
-        reset();
-        relaese();
+        Touch::reset();
+        Touch::relaese();
         delay(1500);
+        if (tftTaskHandle != NULL) {
+            xTaskNotifyGive(tftTaskHandle);
+        }
         const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
         // generate the password each loop iteration
         for(;;){
@@ -149,59 +124,20 @@ namespace TSCA {
 
     //================================================================================================
 
-    // ISR for FAIL_PIN
-    void IRAM_ATTR stopTimer() {
-        if (measure) {
-            endTime = timerRead(fastTimer);// + timerRead(slowTimer);
-            measure = false;
-        }
-    }
 
-    void IRAM_ATTR startTimer() {
-        if (!measure) {
-            timerWrite(fastTimer, 0); // Reset the timer
-            //timerWrite(slowTimer, 0); // Reset the timer
-            measure = true;
-        }
-    }
 
-    void onRec_Callback(int numOfBytes){
-        for(uint8_t i = 0 ; Wire.available() ; i++){
-            data[i] = Wire.read();
-        }
-    }
-    void onReq_Callback(){
-        if(data[0] == 0x5E){
-            Wire.write(0x24);
-        }
-        else if(data[0] == 0x5D){
-            Wire.write(0x0);
-        }
-        else if(data[0] == 0x00){
-            Wire.write((uint8_t)Touch::state);
-            Wire.write(Touch::state >> 8);
-            if(Touch::state == ENTER_BUTTON){
-                startTimer();
-            }
-        }
-        data[0] = 0xFF;
-    }
+    
 
     uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock)
     {
         for (uint8_t i = 0; i < PASS_SIZE; i++){
-            touch(password[i]);
-            relaese();
+            Touch::touch(password[i]);
+            Touch::relaese();
         }
 
-        enter();
-        while (measure || endTime == 0){}
-            //Serial.printf("%d ,%" PRIu64 ",%" PRIu64 "\n" , measure, endTime, startTime);
+        Touch::enter();
 
-        uint64_t duration = endTime;
-        endTime = 0; // Reset endTime for next measurement
-
-        return duration;
+        return StopWatch::wait();
     }
 
     void theEnd() {
