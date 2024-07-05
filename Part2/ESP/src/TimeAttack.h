@@ -8,9 +8,11 @@ namespace TSCA {
     #define FAIL_PIN GPIO_NUM_27
     #define FAIL_PIN2 12
     #define SUCCESS_PIN 14
-
-    
-    hw_timer_t * timer = NULL;
+    #define NUM_OF_ITERAIONS 20
+    #define PASS_SIZE 4 
+    const float PROGRESS_INTERVAL = 100.0 / (NUM_OF_ITERAIONS * (PASS_SIZE-1) * 10);
+    hw_timer_t * fastTimer = NULL;
+    hw_timer_t * slowTimer = NULL;
     volatile uint64_t endTime = 0;
     volatile bool measure = false;
     typedef enum {NOTHING, FINISHED_BATCH, SUCCESS, FAIL, INC, FOUND_I2C} EventType_t;
@@ -31,9 +33,12 @@ namespace TSCA {
 
     uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock);
 
+    void TSCALoop(void*);
+
     void theEnd();
 
     void i2cTask(void *parameter) {
+
         while(!Wire.begin(0x5A, SDA, SCL, 400000)){delay(10);}
         Wire.onReceive(onRec_Callback);
         Wire.onRequest(onReq_Callback);
@@ -45,22 +50,7 @@ namespace TSCA {
 
     uint8_t pass[PASS_SIZE];
 
-    typedef struct TSCATaskArg_t {
-        uint16_t numOfIteraions;
-        uint8_t passSize;
-        uint8_t* pass;
-        EventType_t* eventType;
-    } TSCATaskArg_t;
-
     void TSCALoop(void* arg) {
-        if(!arg){
-            log_e("NULL argument");
-            vTaskDelete(NULL);
-        }
-        TSCATaskArg_t* TSCAarg = (TSCATaskArg_t*)arg;
-
-        const float PROGRESS_INTERVAL = 100.0 / (TSCAarg->numOfIteraions * (PASS_SIZE-1) * 10);
-
         pinMode(FAIL_PIN, INPUT);
         pinMode(SUCCESS_PIN, INPUT);
         
@@ -71,18 +61,18 @@ namespace TSCA {
         delay(10);
 
         // Initialize the timer
-        timer = timerBegin(0, 2, true); // Use timer 0, prescaler 1 (4.17ns per tick), count up
-
+        fastTimer = timerBegin(0, 2, true); // Use timer 0, prescaler 1 (4.17ns per tick), count up
+        //slowTimer = timerBegin(1, 16, true);
         for (uint8_t i = 0; i < 4; i++)
         {
             data[i] = 0xFF;
         }
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
-        delay(500);
-        reset();
-        release();
         delay(3000);
+        reset();
+        relaese();
+        delay(1500);
         const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
         // generate the password each loop iteration
         for(;;){
@@ -90,10 +80,10 @@ namespace TSCA {
 
             for (uint8_t index = 0; index < PASS_SIZE-1; index++)
             {
-                uint8_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
-                uint32_t results[10] = {0,0,0,0,0,0,0,0,0,0};
-                for (uint8_t i = 0; i < TSCAarg->numOfIteraions; i++){
-                    uint32_t max_time = 0;
+                uint16_t maxes[10] = {0,0,0,0,0,0,0,0,0,0};
+                uint64_t results[10] = {0,0,0,0,0,0,0,0,0,0};
+                for (uint32_t i = 0; i < NUM_OF_ITERAIONS; i++){
+                    uint64_t max_time = 0;
                     for (uint8_t j = 0; j < 10; j++)
                     {
                         pass[index] = j;
@@ -105,13 +95,29 @@ namespace TSCA {
                             TSCA::eventState = INC;
                             xTaskNotifyGive(tftTaskHandle);
                         }
+                        /*for (int i = 0; i < 10; i++) {
+                            Serial.print(results[i]);
+                            Serial.print(" ");
+                        }
+                        Serial.println();*/
                     }
                     for (uint8_t j = 0; j < 10; j++)
                         if(results[j] == max_time)
                             maxes[j]++;
                 }
-                uint8_t max = 0;
-                uint8_t maxval = 0;
+                for (int i = 0; i < 10; i++) {
+                    Serial.print(maxes[i]);
+                    Serial.print(" ");
+                }
+                Serial.println();
+                for (int i = 0; i < 10; i++) {
+                    Serial.print(results[i]);
+                    Serial.print(" ");
+                }
+                Serial.println();
+                
+                uint16_t max = 0;
+                uint16_t maxval = 0;
                 for (uint8_t j = 0; j < 10; j++)
                     if(maxes[j] > maxval){
                         max = j;
@@ -127,7 +133,7 @@ namespace TSCA {
             {
                 pass[PASS_SIZE-1] = j;
                 sendPassword(pass, (SemaphoreHandle_t*)arg);
-                progress += PROGRESS_INTERVAL*(TSCAarg->numOfIteraions);
+                progress += PROGRESS_INTERVAL*NUM_OF_ITERAIONS;
                 if (tftTaskHandle != NULL) {
                     TSCA::eventState = INC;
                     xTaskNotifyGive(tftTaskHandle);
@@ -146,14 +152,15 @@ namespace TSCA {
     // ISR for FAIL_PIN
     void IRAM_ATTR stopTimer() {
         if (measure) {
-            endTime = timerRead(timer);
+            endTime = timerRead(fastTimer);// + timerRead(slowTimer);
             measure = false;
         }
     }
 
     void IRAM_ATTR startTimer() {
         if (!measure) {
-            timerWrite(timer, 0); // Reset the timer
+            timerWrite(fastTimer, 0); // Reset the timer
+            //timerWrite(slowTimer, 0); // Reset the timer
             measure = true;
         }
     }
@@ -184,7 +191,7 @@ namespace TSCA {
     {
         for (uint8_t i = 0; i < PASS_SIZE; i++){
             touch(password[i]);
-            release();
+            relaese();
         }
 
         enter();

@@ -10,7 +10,7 @@ namespace Touch{
     uint16_t state = 0;
     const uint8_t real_to_fake_keypad[10] = {4, 3, 7, 11, 2, 6, 10, 1, 5 ,9};
 
-    void release(){
+    void relaese(){
         state = 0;
         delay(TOUCH_DELAY);
     }
