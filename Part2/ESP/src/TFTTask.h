@@ -13,8 +13,8 @@ namespace TFT{
         byte color = 0;
 
         while (true){
-            for (size_t i = 0; i <= 360; i+=1){
-                tft.drawArc(128/2, 128/2, 50, 45, 0, i, TFT_GREENYELLOW + 0x1111 * color, TFT_BLACK);
+            for (size_t i = 0; i <= 360; i+=2){
+                tft.drawArc(128/2, 128/2, 50, 45, i<=180 ? 180 : 0, i<=180 ? 180 + i : i - 180 , TFT_GREENYELLOW + 0x1111 * color, TFT_BLACK);
                 ulTaskNotifyTake(pdTRUE, 1 / portTICK_PERIOD_MS);
                 if(TSCA::eventState == TSCA::FOUND_I2C)
                     goto exit;
@@ -78,10 +78,11 @@ namespace TFT{
                 tft.drawArc(128/2, 128/2, 50, 45, 0, 360, TFT_GREENYELLOW, TFT_BLACK);
                 tft.drawCentreString("XXXX", textX, textY - textHeight / 2, 1);
                 break;
-            case TSCA::INC:
-                tft.drawArc(128/2, 128/2, 50, 45, 0, (uint16_t)(TSCA::progress * 3.6), TFT_BLUE, TFT_BLACK);
-                break;
-            
+            case TSCA::INC:{
+                    uint16_t inc = (uint16_t)(TSCA::progress * 3.6);
+                    tft.drawArc(128/2, 128/2, 50, 45, inc <=180 ? 180 : 0, inc <=180 ? 180 + inc : inc - 180 , TFT_BLUE, TFT_BLACK);
+                    break;
+                }
             default:
                 break;
             }
