@@ -41,10 +41,12 @@ namespace TSCA {
         StopWatch::init();
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        log_d("start");
         delay(3000);
         Touch::reset();
         Touch::relaese();
         delay(1500);
+        log_d("calling tft");
         if (tftTaskHandle != NULL) {
             xTaskNotifyGive(tftTaskHandle);
         }
@@ -123,10 +125,6 @@ namespace TSCA {
     }
 
     //================================================================================================
-
-
-
-    
 
     uint64_t sendPassword(uint8_t* password, SemaphoreHandle_t* lock)
     {
