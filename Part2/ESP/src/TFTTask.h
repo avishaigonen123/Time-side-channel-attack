@@ -17,13 +17,11 @@ namespace TFT{
                 tft.drawArc(128/2, 128/2, 50, 45, 0, i, TFT_GREENYELLOW + 0x1111 * color, TFT_BLACK);
                 ulTaskNotifyTake(pdTRUE, 1 / portTICK_PERIOD_MS);
                 if(TSCA::eventState == TSCA::FOUND_I2C)
-                    log_d("start");
                     goto exit;
             }
             color++;
         }
         exit:
-
         tft.drawArc(128/2, 128/2, 50, 45, 0, 360, TFT_GREENYELLOW, TFT_BLACK);
         char buf[PASS_SIZE + 1]; // Create a buffer with an extra space for the null-terminator
         static const uint16_t textColor = TFT_WHITE;

@@ -40,6 +40,7 @@ namespace I2CTask {
 
         TSCA::eventState = TSCA::FOUND_I2C;
         
+        log_d("notified TSCA");
         xTaskNotifyGive(xTaskGetHandle("TSCA"));
 
         vTaskDelete(NULL);

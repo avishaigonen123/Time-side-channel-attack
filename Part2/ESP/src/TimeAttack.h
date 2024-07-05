@@ -41,13 +41,15 @@ namespace TSCA {
         StopWatch::init();
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
+        eventState = NOTHING;
         log_d("start");
         delay(3000);
         Touch::reset();
         Touch::relaese();
         delay(1500);
-        log_d("calling tft");
         if (tftTaskHandle != NULL) {
+            log_d("calling tft");
+            eventState = FOUND_I2C;
             xTaskNotifyGive(tftTaskHandle);
         }
         const uint8_t initPass[PASS_SIZE] = {0,0,0,0};
