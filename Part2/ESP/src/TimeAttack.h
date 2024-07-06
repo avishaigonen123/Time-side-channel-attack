@@ -9,7 +9,7 @@
 #define FAIL_PIN2 12
 #define SUCCESS_PIN 14
 #define NUM_OF_ATTEMPTS_FOR_DIGIT 20
-#define PASS_SIZE 4 
+#define PASS_SIZE 4
 
 namespace TSCA {
     const uint8_t NUM_OF_BRUTEFORCE_DIGITS = round(log10((NUM_OF_ATTEMPTS_FOR_DIGIT*2)/log(10))+1);
@@ -45,6 +45,7 @@ namespace TSCA {
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         eventState = NOTHING;
         delay(3000);
+        log_d("reseting the password");
         Touch::reset();
         Touch::relaese();
         delay(1500);
