@@ -92,9 +92,6 @@ namespace TFT{
         tft.setRotation(6);
         tft.fillScreen(TFT_BLACK);
         
-        
-
-
         sleepScrean(tft);
 
         char buf[PASS_SIZE + 1]; // Create a buffer with an extra space for the null-terminator
@@ -102,7 +99,7 @@ namespace TFT{
 
         tft.setTextColor(textColor, backgroundColor); // Set text color and background color
         drawRatio(tft, TSCA::NUM_OF_BRUTEFORCE_DIGITS, PASS_SIZE - TSCA::NUM_OF_BRUTEFORCE_DIGITS);
-        tft.setTextSize(TextSize);  // Set text size
+        tft.setTextSize(PASS_SIZE<=6?TextSize:1);  // Set text size
         resetProgress(tft, buf, &index);
         for (;;) {
             // Wait for notification from TSCALoop

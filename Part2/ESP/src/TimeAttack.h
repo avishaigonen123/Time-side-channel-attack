@@ -12,13 +12,14 @@
 #define PASS_SIZE 4
 
 namespace TSCA {
+    typedef enum {NOTHING, FINISHED_BATCH, SUCCESS, FAIL, INC, FOUND_I2C} EventType_t;
+    EventType_t eventState = NOTHING;
+
     const uint8_t NUM_OF_BRUTEFORCE_DIGITS = round(log10((NUM_OF_ATTEMPTS_FOR_DIGIT*2)/log(10))+1);
     const uint32_t NUM_OF_BRUTEFORCE_ITERAIONS = pow(10, NUM_OF_BRUTEFORCE_DIGITS);
     const uint32_t NUM_OF_ITERATIONS = NUM_OF_BRUTEFORCE_ITERAIONS + (NUM_OF_ATTEMPTS_FOR_DIGIT * (PASS_SIZE-NUM_OF_BRUTEFORCE_DIGITS) * 10);
     const float PROGRESS_INTERVAL = 100.0 / NUM_OF_ITERATIONS;
-    
-    typedef enum {NOTHING, FINISHED_BATCH, SUCCESS, FAIL, INC, FOUND_I2C} EventType_t;
-    EventType_t eventState = NOTHING;
+
     float progress = 0;
 
     TaskHandle_t tftTaskHandle = NULL;
@@ -44,7 +45,7 @@ namespace TSCA {
 
         ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
         eventState = NOTHING;
-        delay(3000);
+        delay(10);
         log_d("reseting the password");
         Touch::reset();
         Touch::relaese();
