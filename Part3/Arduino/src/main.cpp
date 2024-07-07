@@ -5,7 +5,7 @@
 // start the software serial, for communication with the ESP32
 SoftwareSerial SerialESP32(6,7);
 
-uint32_t privKey = 0xCD;
+uint32_t privKey = 0x89;
 uint32_t a = 2;
 uint32_t b = 3;
 uint32_t p = 193939;

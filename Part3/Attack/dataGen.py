@@ -4,7 +4,7 @@ import datetime
 
 
 # just so we can manage files more easily
-key = "0xCD"
+key = "0x89"
 isItRegular = "S"
 
 # Function to generate points and write to file
