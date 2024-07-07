@@ -4,21 +4,21 @@ from elliptic_curve import EllipticCurve, Point
 import os
 import re
 from datetime import datetime
-
-DELTA = 1.2 # this is the difference between the two groups
+ # this is the difference between the two groups
+DELTA = 0.12
 KEY_SIZE = 8 # key size in bits
 
 # Elliptic curve parameters
-p = 97
 a = 2
 b = 3
+p = 193939
 
 curve = EllipticCurve(a, b, p)
 
 # function that returns the most recent data file
 def get_most_recent_file(directory):
     # Regular expression to match the date and time in the filename
-    pattern = re.compile(r'data_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.txt')
+    pattern = re.compile(r'.+_(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.txt')
 
     most_recent_file = None
     most_recent_time = None
@@ -85,7 +85,8 @@ def crack_key(points_to_times):
     negative_in_special_modulo = {} # dictionary of points that did modulo after 1 stage
     not_negative_in_special_modulo = {} # dictionary of points that were not modulo at all
     key_bits = [] # here we'll store the key bits
-
+    #points_to_times = promote_points(points_to_times, 0)
+    index = 0
     # find the key bits, bit by bit
     while not len(key_bits) == KEY_SIZE:
        # first, cluster the points to 2 clusters
@@ -100,7 +101,9 @@ def crack_key(points_to_times):
             key_bits += [1]
         else: # otherwise, the bit is 0
             key_bits += [0]
+        '''key_bits += [realKey[index]]
 
+        index += 1'''
         # promote points, according to the last bit found
         points_to_times = promote_points(points_to_times, key_bits[-1]) 
 
@@ -111,7 +114,7 @@ def crack_key(points_to_times):
 def main():
     # open file and read content
     path = 'data\\' + get_most_recent_file('data')
-
+    print("Reading data from: " + path)
     points_to_times = {} # dictionary of points to times
 
     with open(path, 'r') as file:

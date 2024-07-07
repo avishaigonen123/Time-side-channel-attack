@@ -8,7 +8,7 @@ SoftwareSerial SerialESP32(6,7);
 uint32_t privKey = 0xBA;
 uint32_t a = 2;
 uint32_t b = 3;
-uint32_t p = 5003;
+uint32_t p = 193939;
 EllipticCurve curve(a,b,p);
 
 Point point;
@@ -26,7 +26,7 @@ void loop(){
         SerialESP32.read(); // dump the space
         point.y = SerialESP32.parseInt();
 		SerialESP32.read(); // dump the newline
-
+        point.print(&Serial);
         // calculate the point, and send via the serial to the server
 		curve.EllipticCurveCalcPoint(point, privKey).print(&SerialESP32); 
 		

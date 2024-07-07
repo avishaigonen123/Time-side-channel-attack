@@ -112,9 +112,10 @@ uint32_t EllipticCurve::module(int32_t a, int32_t b) {
 
 // special modulo
 uint32_t EllipticCurve::special_module(int32_t a, int32_t b) {
-    if(a < 0)
-    {
-        delay(5); // handle negative numbers
+    int r = a % b;
+    if (r < 0){
+        delay(5);
+        r += b;
     }
-    return module(a, b);
+    return r;
 }
