@@ -39,8 +39,10 @@ def get_most_recent_file(directory):
 
 # function that returns true if in the special modulo, the value is negative.
 def is_negative_in_special_modulo(point, ogP):
-    R0 = curve.doublingPoint(point) 
-    return R0.y < ogP.y # "numerator = point.y - R0.y", it enters the if only when this is negative'
+    R0 = curve.doublingPoint(point)
+    numerator = R0.y - point.y
+    denominator = R0.x - point.x
+    return numerator*denominator < 0 # "numerator = point.y - R0.y", it enters the if only when this is negative'
 
 # function that promote all points to next iteration, using the given key_bit
 def promote_points(points_to_times, key_bit):
@@ -95,10 +97,10 @@ def crack_key(points_to_times):
 
     negative_in_special_modulo = {} # dictionary of points that did modulo after 1 stage
     not_negative_in_special_modulo = {} # dictionary of points that were not modulo at all
-    key_bits = [1] # here we'll store the key bits
+    key_bits = [] # here we'll store the key bits
     #points_to_times = promote_points(points_to_times, 0)
-    index = 1
-    realKey = [1,0,1,1,1,0,1,0]
+    index = 0
+    realKey = [1,1,0,0,1,1,0,1]
     # find the key bits, bit by bit
     while not len(key_bits) == KEY_SIZE:
        # first, cluster the points to 2 clusters
@@ -111,13 +113,13 @@ def crack_key(points_to_times):
         # if the difference between the averages is significant, the operation was done and the bit is 1
         d = abs(average_negative_in_special_modulo - average_not_negative_in_special_modulo)
         print(d)
-        if d > DELTA:
-            key_bits += [1]
-        else: # otherwise, the bit is 0
-            key_bits += [0]
+        # if d > DELTA:
+        #     key_bits += [1]
+        # else: # otherwise, the bit is 0
+        #     key_bits += [0]
         
-        # key_bits += [realKey[index]]
-        # index += 1
+        key_bits += [realKey[index]]
+        index += 1
 
         # promote points, according to the last bit found
         points_to_times = promote_points(points_to_times, key_bits[-1])
