@@ -4,8 +4,8 @@ import datetime
 
 
 # just so we can manage files more easily
-key = "0xBA"
-isItRegular = "T"
+key = "0xCD"
+isItRegular = "S"
 
 # Function to generate points and write to file
 a = 2
@@ -71,7 +71,7 @@ def generateEllipticCurvePoints(a, b, n, lim):
 
 def generatePoints(file, ser):
     print("Generating points...")
-    curve_points = generateEllipticCurvePoints(a, b, p, 30000) # curve has all points on the curve
+    curve_points = generateEllipticCurvePoints(a, b, p, 5000) # curve has all points on the curve
     
     print("Sending points...")
     for point in curve_points: # iterate over all points

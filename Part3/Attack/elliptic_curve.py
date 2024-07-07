@@ -24,17 +24,20 @@ class EllipticCurve:
         self.InfPoint = Point(-1, -1)
 
     def addPoint(self, point1, point2):
+        if point1.x == point2.x and point1.y == point2.y:
+            return self.doublingPoint(point1)
         if point1.x == point2.x: # vertical
             return self.InfPoint
         if point1 == self.InfPoint: 
             return point2
         if point2 == self.InfPoint:
             return point1
-        if point1.x == point2.x and point1.y == point2.y:
-            return self.doublingPoint(point1)
 
         numerator = point1.y - point2.y
         denominator = point1.x - point2.x
+        if denominator < 0:
+            numerator *= -1
+            denominator *= -1
         s = self.module(numerator, self.p) * self.modularInverse(denominator, self.p) % self.p
 
         R_x = s * s - (point1.x + point2.x)
@@ -100,8 +103,11 @@ class EllipticCurve:
 
 # Example usage
 if __name__ == "__main__":
-    curve = EllipticCurve(a=2, b=3, p=1739)
-    P = Point(12, 4)
-    PrivKey = 123456789
-    result = curve.EllipticCurveCalcPoint(P, PrivKey)
-    print(result)
+    curve = EllipticCurve(a=2, b=3, p=97)
+    P = Point(3, 6)
+    R0 = P
+    R0 = curve.addPoint(R0, P)
+    R0 = curve.addPoint(R0, P)
+    R0 = curve.addPoint(R0, P)
+    R0 = curve.addPoint(R0, P)
+    print(R0)

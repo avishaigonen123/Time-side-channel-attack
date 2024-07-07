@@ -4,17 +4,23 @@
 // Function that performs point adding
 Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
 {
+    if (point1.x == point2.x && point1.y == point2.y) // the same point
+        return doublingPoint(point1);  
     if (point1.x == point2.x) // next point will be infinity point
         return InfPoint;    
     if (point1 == InfPoint) // return the second point
         return point2;
     if (point2 == InfPoint) // return the second point
         return point1;
-    if (point1.x == point2.x && point1.y == point2.y) // the same point
-        return doublingPoint(point1);  
     Point R;
     int32_t numerator = point1.y - point2.y;
     int32_t denominator = point1.x - point2.x;
+
+    if (denominator < 0){
+        numerator *= -1;
+        denominator *= -1;
+    }
+
     int32_t s = special_module(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - (point1.x + point2.x);
@@ -114,7 +120,7 @@ uint32_t EllipticCurve::module(int32_t a, int32_t b) {
 uint32_t EllipticCurve::special_module(int32_t a, int32_t b) {
     int r = a % b;
     if (r < 0){
-        delay(5);
+        delay(10);
         r += b;
     }
     return r;
