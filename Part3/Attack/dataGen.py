@@ -5,7 +5,7 @@ import datetime
 
 # just so we can manage files more easily
 key = "0xBA"
-isItRegular = "S"
+isItRegular = "T"
 
 # Function to generate points and write to file
 a = 2
@@ -18,7 +18,7 @@ def timeStr():
 def sendPoint(point, ser):
     ser.write((f"{point[0]} {point[1]}\n").encode())
     while ser.in_waiting == 0:
-        time.sleep(0.00001)  # Small delay to avoid busy-waiting
+        time.sleep(0.000001)  # Small delay to avoid busy-waiting
     ans1 = ser.readline().decode()
     ans = ans1.strip()
     return int(ans)
@@ -27,7 +27,7 @@ def main():
     # Open a serial port
     try:
         ser = serial.Serial(
-            port='COM5',  # Replace with your port name
+            port='COM3',  # Replace with your port name
             baudrate=115200,
             timeout=1
         )

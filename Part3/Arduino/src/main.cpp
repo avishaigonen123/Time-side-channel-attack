@@ -28,8 +28,9 @@ void loop(){
 		SerialESP32.read(); // dump the newline
         point.print(&Serial);
         // calculate the point, and send via the serial to the server
-		curve.EllipticCurveCalcPoint(point, privKey).print(&SerialESP32); 
-		
+		Point res = curve.EllipticCurveCalcPoint(point, privKey); 
+        res.print(&SerialESP32);
+		res.print(&Serial);
         // dump the rest
         byte* garbeg = new byte[SerialESP32.available()];
         SerialESP32.readBytes(garbeg, SerialESP32.available());

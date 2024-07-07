@@ -5,7 +5,7 @@ import os
 import re
 from datetime import datetime
  # this is the difference between the two groups
-DELTA = 0.12
+DELTA = 0.5
 KEY_SIZE = 8 # key size in bits
 
 # Elliptic curve parameters

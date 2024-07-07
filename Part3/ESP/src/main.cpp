@@ -4,7 +4,7 @@
 
 
 void setup(){
-    SerialArduino.begin(115200);
+    Serial2.begin(115200);
     Serial.begin(115200);
 }
 
@@ -18,19 +18,31 @@ void loop(){
 		Serial.read(); // dump the newline
 
         // send the point to the arduino
-        point.print(&SerialArduino);
+        point.print(&Serial2);
+
+        byte* garbeg = new byte[Serial2.available()];
+        Serial2.readBytes(garbeg, Serial2.available());
+        delete[] garbeg;
 
         // check how much time it takes to calculate the new point
         uint64_t lastTime = millis();
-        while(!SerialArduino.available());
+        while(!Serial2.available());
+        // send the point to the arduino
         lastTime = millis() - lastTime;
 
         // print to serial the time it took to calculate the new point
+        /*point.x = Serial2.parseInt();
+        Serial2.read(); // dump the space
+        point.y = Serial2.parseInt();
+		Serial2.read(); // dump the newline
+        point.print(&Serial);*/
+        
         Serial.printf("%" PRIu64 "\n", lastTime);
 
+
         // cleanup for next iteration
-        byte* garbeg = new byte[SerialArduino.available()];
-        SerialArduino.readBytes(garbeg, SerialArduino.available());
+        garbeg = new byte[Serial2.available()];
+        Serial2.readBytes(garbeg, Serial2.available());
         delete[] garbeg;
 
         garbeg = new byte[Serial.available()];
