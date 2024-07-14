@@ -6,6 +6,8 @@ import datetime
 # just so we can manage files more easily
 key = "0x89"
 isItRegular = "S"
+message = "Hello world!"
+N = 1000 # number of messages to send
 
 # Function to generate points and write to file
 a = 2
@@ -15,13 +17,36 @@ p = 193939
 def timeStr():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-def sendPoint(point, ser):
-    ser.write((f"{point[0]} {point[1]}\n").encode())
+def sendMessage(message, ser):
+    ser.write((f"{message}\n").encode())
     while ser.in_waiting == 0:
         time.sleep(0.000001)  # Small delay to avoid busy-waiting
     ans1 = ser.readline().decode()
     ans = ans1.strip()
-    return int(ans)
+    return ans
+
+'''
+def generateEllipticCurvePoints(a, b, n, lim):
+    # Precompute y^2 % n
+    y_squares = {((y*y) % n): y for y in range(n)}
+    
+    res = []
+    for x in range(n):
+        temp = (x**3 + x*a + b) % n
+        if temp in y_squares:
+            res.append((x, y_squares[temp]))
+            if len(res) == lim:
+                return res
+    return res
+'''
+
+def signMessages(file, ser):
+    print("Sending messages...")
+    for _ in range(N):
+        content = sendMessage(message, ser) 
+        r, s, time = content.split(", ")
+        file.write(f"{r}, {s}, {time}\n") # write to the file the results
+
 
 def main():
     # Open a serial port
@@ -41,9 +66,9 @@ def main():
 
         # Open file for writing
         with open(f"data/{isItRegular}_{a}_{b}_{p}_{key}_{timeStr()}.txt", "w") as file:
-            file.write("X cord  |  Y cord  |  time[ms]\n")
-            # Send point and write response to file
-            generatePoints(file, ser)
+            file.write("r  |  s  |  time[ms]\n")
+            # Send messages and write response to file
+            signMessages(file, ser)
             
 
     except serial.SerialException as e:
@@ -54,30 +79,6 @@ def main():
         if ser.is_open:
             ser.close()
             print("Serial port closed.")
-
-# generate the points on the elliptic curve
-def generateEllipticCurvePoints(a, b, n, lim):
-    # Precompute y^2 % n
-    y_squares = {((y*y) % n): y for y in range(n)}
-    
-    res = []
-    for x in range(n):
-        temp = (x**3 + x*a + b) % n
-        if temp in y_squares:
-            res.append((x, y_squares[temp]))
-            if len(res) == lim:
-                return res
-    return res
-
-def generatePoints(file, ser):
-    print("Generating points...")
-    curve_points = generateEllipticCurvePoints(a, b, p, 5000) # curve has all points on the curve
-    
-    print("Sending points...")
-    for point in curve_points: # iterate over all points
-        t = sendPoint(point, ser) 
-        file.write(f"{point[0]} {point[1]} {t}\n") # write to the file the results
-        print(f"{point}")
 
 
 if __name__ == '__main__':
