@@ -5,7 +5,11 @@ import os
 import re
 from datetime import datetime
  # this is the difference between the two groups
+<<<<<<< HEAD
 DELTA = 0.2
+=======
+DELTA = 0.1
+>>>>>>> 09d732de051a740b91c69bc5f78c4e7c7eaef0aa
 KEY_SIZE = 8 # key size in bits
 CONST_STD_DIV = 150
 
@@ -100,9 +104,14 @@ def crack_key(points_to_times):
     key_bits = [1] # here we'll store the key bits
     #points_to_times = promote_points(points_to_times, 0)
     index = 1
+<<<<<<< HEAD
     realKey = [1,1,0,0,1,1,0,1]
     #points_to_times = promote_points(points_to_times, key_bits[-1])
 
+=======
+    realKey = [1,0,1,1,1,0,1,0]
+    points_to_times = promote_points(points_to_times, key_bits[-1])
+>>>>>>> 09d732de051a740b91c69bc5f78c4e7c7eaef0aa
     # find the key bits, bit by bit
     while not len(key_bits) == KEY_SIZE:
         # print(key_bits[-1])
@@ -115,6 +124,7 @@ def crack_key(points_to_times):
 
         # if the difference between the averages is significant, the operation was done and the bit is 1
         d = abs(average_negative_in_special_modulo - average_not_negative_in_special_modulo)
+<<<<<<< HEAD
         print(d)
         if d > DELTA:
             key_bits = key_bits + [1]
@@ -125,8 +135,18 @@ def crack_key(points_to_times):
         # index += 1
 
         # promote points, according to the last bit found
+=======
+        print()
+        print(realKey[index])
+        if d > DELTA:
+            print("one")
+        else: # otherwise, the bit is 0
+            print("zero")
+        
+        key_bits += [realKey[index]]
+        index += 1
+>>>>>>> 09d732de051a740b91c69bc5f78c4e7c7eaef0aa
         points_to_times = promote_points(points_to_times, key_bits[-1])
-
     # return the key 
     return key_bits
 
