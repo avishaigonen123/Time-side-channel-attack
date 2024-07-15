@@ -64,8 +64,9 @@ fastest_signatures = sorted_signatures[:d]
 
 # Step 3: Construct the lattice for lattice-based attack
 def construct_lattice(signatures):
-    B = IntegerMatrix(d, d + 1)
-    for i in range(d):
+    dim = len(signatures)
+    B = IntegerMatrix(dim + 2, dim + 2)
+    for i in range(dim):
         signature, duration = signatures[i]
         r, s = signature.r, signature.s
         # Construct the equation from the signature
@@ -75,6 +76,16 @@ def construct_lattice(signatures):
         B[i, 2] = curve.order()
         # Add more rows as needed based on the attack description
     return B
+
+def geom_bound(self, i wndex):
+        """Estimate the number of leading zero bits at signature with `index`."""
+        i = 1
+        while (self.total_sigs) / (2 ** i) >= index + 1:
+            i += 1
+        i -= 1
+        if i <= 1:
+            return 0
+        return i
 
 B = construct_lattice(fastest_signatures)
 
