@@ -1,5 +1,6 @@
-#include "EllipticCurve.h"
 #include <Arduino.h>
+#include "EllipticCurve.h"
+#include "Math.h"
 
 // Function that performs point adding
 Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
@@ -21,7 +22,7 @@ Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
         denominator *= -1;
     }
 
-    int32_t s = special_module(numerator, p) * modularInverse(denominator, p);
+    int32_t s = module(numerator, p) * modularInverse(denominator, p);
 
     R.x = s * s - (point1.x + point2.x);
     R.x = module(R.x, p);
@@ -67,37 +68,7 @@ Point EllipticCurve::EllipticCurveCalcPoint(Point P, uint32_t PrivKey){
     return scalarMultiplication(P, PrivKey); // use the scalar multiplication algorithm
 }
 
-// Function to calculate gcd(a, b) using Euclidean algorithm
-int EllipticCurve::gcdExtended(int a, int b, int *x, int *y) {
-    // Base case
-    if (a == 0) {
-        *x = 0, *y = 1;
-        return b;
-    }
 
-    int x1, y1; // To store results of recursive call
-    int gcd = gcdExtended(b % a, a, &x1, &y1);
-
-    // Update x and y using results of recursive call
-    *x = y1 - (b / a) * x1;
-    *y = x1;
-
-    return gcd;
-}
-
-// Function to find modular inverse of a under regular_modulo p
-int EllipticCurve::modularInverse(int a, int p) {
-    int x, y;
-    int gcd = gcdExtended(a, p, &x, &y);
-
-    if (gcd != 1) {
-        // Modular inverse doesn't exist
-        return -1;
-    } else {
-        // Handling negative x to ensure it's positive
-        return (x % p + p) % p;
-    }
-}
 
 // this function calculates the length in bits of the key
 byte EllipticCurve::key_length(uint32_t k)
@@ -108,20 +79,12 @@ byte EllipticCurve::key_length(uint32_t k)
     return 0;
 }
 
-// simple modulo
-uint32_t EllipticCurve::module(int32_t a, int32_t b) {
-    int r = a % b;
-    if (r < 0)
-        r += b;
-    return r;
-}
 
-// special modulo
-uint32_t EllipticCurve::special_module(int32_t a, int32_t b) {
-    int r = a % b;
-    if (r < 0){
-        delay(10);
-        r += b;
-    }
-    return r;
+
+uint32_t EllipticCurve::calcOrder(Point G)
+{
+    Point P = G;
+    uint32_t i = 0;
+    for (; !(P == InfPoint); i++){ P = addPoint(P, G); }
+    return i+1;
 }

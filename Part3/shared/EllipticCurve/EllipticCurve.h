@@ -8,10 +8,7 @@ class EllipticCurve{
     uint32_t a;  //coefficient for elliptic curve
     uint32_t b; //coefficient for elliptic curve
     uint32_t p; //prime number to provide finite field
-    int gcdExtended(int a, int b, int *x, int *y);
-    int modularInverse(int, int);
-    uint32_t module(int32_t, int32_t);
-    uint32_t special_module(int32_t, int32_t);
+    
     uint8_t key_length(uint32_t);
 public:
     const Point InfPoint = {UINT32_MAX, UINT32_MAX};
@@ -29,6 +26,8 @@ public:
 
     // for modularization of the program, that we'll be able to use different implementations
     Point EllipticCurveCalcPoint(Point P, uint32_t PrivKey);
+
+    uint32_t calcOrder(Point G);
 };
 
 #endif // ELLIPTIC_CURVE_H
