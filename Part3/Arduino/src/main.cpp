@@ -41,25 +41,19 @@
 // }
 
 ECDSA ecdsa;
-EllipticCurve curve1(2,3,97);
-EllipticCurve curve2(2,4,97);
 
 void setup(){
     Serial.begin(115200);
     randomSeed(analogRead(0));
-
     ECDSA_keypair_t keys = ecdsa.make_keypair();
     uint32_t hash = 1234;
-    for (size_t i = 0; i < 20; i++)
-    {
+    for (size_t i = 0; i < 20; i++){
         ECDSA_sig_t sig = ecdsa.sign(keys.privKey, hash);
-        Serial.print(i);
-        Serial.print(" ");
         Serial.println(ecdsa.verify(keys.Q, sig, hash));
     }
 }
 
 void loop(){
-
+    
 }
 

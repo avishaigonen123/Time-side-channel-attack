@@ -4,8 +4,8 @@
 #include "EllipticCurve.h"
 
 typedef struct ECDSA_sig_t{
-    uint16_t r;
-    uint16_t s;
+    uint32_t r;
+    uint32_t s;
 } ECDSA_sig_t;
 
 typedef struct ECDSA_keypair_t{

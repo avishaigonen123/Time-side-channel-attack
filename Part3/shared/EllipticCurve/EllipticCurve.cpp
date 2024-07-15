@@ -22,7 +22,7 @@ Point EllipticCurve::addPoint(const Point& point1, const Point& point2)
         denominator *= -1;
     }
 
-    int32_t s = module(numerator, p) * modularInverse(denominator, p);
+    int32_t s = module(numerator, p) * modularInverse(denominator, p) % p;
 
     R.x = s * s - (point1.x + point2.x);
     R.x = module(R.x, p);
@@ -40,7 +40,7 @@ Point EllipticCurve::doublingPoint(const Point& point){
     Point R;
     int32_t numerator = 3 * point.x * point.x + a;
     int32_t denominator = 2 * point.y;
-    int32_t s = module(numerator, p) * modularInverse(denominator, p);
+    int32_t s = module(numerator, p) * modularInverse(denominator, p) % p;
 
     R.x = s * s - 2 * point.x;
     R.x = module(R.x, p);
@@ -59,6 +59,7 @@ Point EllipticCurve::scalarMultiplication(Point P, uint32_t k){
         if(bitRead(k, j)){ // if k[j] == 1
             R0 = addPoint(R0, P);
         }
+        delay(5);
     }
     return R0;
 }
@@ -67,8 +68,6 @@ Point EllipticCurve::scalarMultiplication(Point P, uint32_t k){
 Point EllipticCurve::EllipticCurveCalcPoint(Point P, uint32_t PrivKey){
     return scalarMultiplication(P, PrivKey); // use the scalar multiplication algorithm
 }
-
-
 
 // this function calculates the length in bits of the key
 byte EllipticCurve::key_length(uint32_t k)
@@ -79,12 +78,10 @@ byte EllipticCurve::key_length(uint32_t k)
     return 0;
 }
 
-
-
 uint32_t EllipticCurve::calcOrder(Point G)
 {
     Point P = G;
-    uint32_t i = 0;
-    for (; !(P == InfPoint); i++){ P = addPoint(P, G); }
-    return i+1;
+    uint32_t i = 2;
+    for (; !(P == InfPoint); i++){ P = addPoint(G, P); }
+    return i-1;
 }
