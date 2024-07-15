@@ -17,10 +17,11 @@ class Point:
 
 # class to present Elliptic Curve
 class EllipticCurve:
-    def __init__(self, a, b, p):
+    def __init__(self, a, b, p, G):
         self.p = p
         self.b = b
         self.a = a
+        self.G = G
         self.InfPoint = Point(-1, -1)
 
     def addPoint(self, point1, point2):
@@ -102,7 +103,13 @@ class EllipticCurve:
         return r
 
     def calc_order(self):
-        
+        P = self.G
+        i = 2
+        while P!=self.InfPoint:
+            P = P.addPoint(self.G)
+            i += 1
+        return i-1
+
 
 # Example usage
 if __name__ == "__main__":
