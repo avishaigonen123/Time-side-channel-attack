@@ -101,6 +101,9 @@ class EllipticCurve:
             r += b
         return r
 
+    def calc_order(self):
+        
+
 # Example usage
 if __name__ == "__main__":
     curve = EllipticCurve(a=2, b=3, p=97)
