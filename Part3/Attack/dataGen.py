@@ -8,9 +8,10 @@ import datetime
 ####
 
 # just so we can manage files more easily
-key = "0x89"
-isItRegular = "S"
+key = "0xBA"
 message = "Hello world!"
+# TODO: remove this, this shouldn't exist
+hash = 1234
 N = 1000 # number of messages to send
 
 # Function to generate points and write to file
@@ -22,19 +23,18 @@ def timeStr():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 def sendMessage(message, ser):
-    ser.write((f"{message}\n").encode())
+    ser.write((f"S").encode())
     while ser.in_waiting == 0:
         time.sleep(0.000001)  # Small delay to avoid busy-waiting
-    ans1 = ser.readline().decode()
-    ans = ans1.strip()
+    ans = ser.readline().decode()
     return ans
 
 def signMessages(file, ser):
     print("Sending messages...")
     for _ in range(N):
         content = sendMessage(message, ser) 
-        r, s, time = content.split(", ")
-        file.write(f"{r}, {s}, {time}\n") # write to the file the results
+        r, s, time = content.split(" ")
+        file.write(f"{r} {s} {time}\n") # write to the file the results
 
 
 def main():
@@ -54,7 +54,7 @@ def main():
         print("done.")
 
         # Open file for writing
-        with open(f"data/{isItRegular}_{a}_{b}_{p}_{key}_{timeStr()}.txt", "w") as file:
+        with open(f"data/{a}_{b}_{p}_{key}.txt", "w") as file:
             file.write("r  |  s  |  time[ms]\n")
             # Send messages and write response to file
             signMessages(file, ser)
