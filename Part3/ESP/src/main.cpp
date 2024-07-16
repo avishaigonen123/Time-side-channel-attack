@@ -2,52 +2,53 @@
 #include <math.h>
 #include "shared/EllipticCurve/Point.h"
 
+HardwareSerial& SerialArduino = Serial2;
+
+// clean the garbage
+void flush(Stream& stream){
+    byte* garbeg = new byte[stream.available()];
+    stream.readBytes(garbeg, stream.available());
+    delete[] garbeg;
+    garbeg = nullptr;
+}
+
+void sendToMaster(uint32_t r, uint32_t s, uint64_t time)
+{
+    Serial.printf("%" PRIu32 " %" PRIu32 " %" PRIu64 "\n", r, s, time);
+}
 
 void setup(){
-    Serial2.begin(115200);
+    SerialArduino.begin(115200);
     Serial.begin(115200);
 }
 
 void loop(){
-    if(Serial.available()){
-        // it receives points from the server (PC)
-        Point point;
-        point.x = Serial.parseInt();
-        Serial.read(); // dump the space
-        point.y = Serial.parseInt();
-		Serial.read(); // dump the newline
+    if(Serial.available() && Serial.read() == 'S'){
+        // it receives ack from the server (PC)
 
-        // send the point to the arduino
-        point.print(&Serial2);
-
-        byte* garbeg = new byte[Serial2.available()];
-        Serial2.readBytes(garbeg, Serial2.available());
-        delete[] garbeg;
-
-        // check how much time it takes to calculate the new point
+        // send start to the arduino
         uint64_t lastTime = millis();
-        while(!Serial2.available());
+        
+        SerialArduino.write('S');
+        
+        // cleanup for next iteration
+        flush(SerialArduino);
+        
+        // check how much time it takes to calculate the new point
+        while(!SerialArduino.available());
+        
         // send the point to the arduino
         lastTime = millis() - lastTime;
-
-        // print to serial the time it took to calculate the new point
-        /*point.x = Serial2.parseInt();
-        Serial2.read(); // dump the space
-        point.y = Serial2.parseInt();
-		Serial2.read(); // dump the newline
-        point.print(&Serial);*/
         
-        Serial.printf("%" PRIu64 "\n", lastTime);
+        uint32_t r = SerialArduino.parseInt();
+        SerialArduino.read(); // dump the space
+        uint32_t s = SerialArduino.parseInt();
+		SerialArduino.read(); // dump the newline
 
+        // send to PC the signature and the time it took to be calculated
+        sendToMaster(r, s, lastTime);
 
-        // cleanup for next iteration
-        garbeg = new byte[Serial2.available()];
-        Serial2.readBytes(garbeg, Serial2.available());
-        delete[] garbeg;
-
-        garbeg = new byte[Serial.available()];
-        Serial.readBytes(garbeg, Serial.available());
-        delete[] garbeg;
-        garbeg = nullptr;
+        flush(SerialArduino);
+        flush(Serial);
     }
 }

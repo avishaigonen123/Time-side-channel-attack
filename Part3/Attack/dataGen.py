@@ -23,7 +23,12 @@ def timeStr():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 def sendMessage(message, ser):
+<<<<<<< HEAD
     ser.write((f"S").encode())
+=======
+    ser.write(("S").encode())
+    time.sleep(0.001)
+>>>>>>> a4cf2c1a625dcf3d0309c9e191bf883ca3fc59a4
     while ser.in_waiting == 0:
         time.sleep(0.000001)  # Small delay to avoid busy-waiting
     ans = ser.readline().decode()
@@ -33,7 +38,12 @@ def signMessages(file, ser):
     print("Sending messages...")
     for _ in range(N):
         content = sendMessage(message, ser) 
+<<<<<<< HEAD
         r, s, time = content.split(" ")
+=======
+        r, s, time = content.strip().split(" ")
+        print(f"{r} {s} {time}")
+>>>>>>> a4cf2c1a625dcf3d0309c9e191bf883ca3fc59a4
         file.write(f"{r} {s} {time}\n") # write to the file the results
 
 
