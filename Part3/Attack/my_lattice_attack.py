@@ -26,7 +26,8 @@ def collect_signatures():
     signatures = []
     public_key = None
 
-    path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/new_test_2_1.txt" # + get_most_recent_file('data')
+    path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/new_test_2_1.txt" 
+    
     with open(path, 'r') as file:
         for line in file:
             if line.startswith("public key: "):
