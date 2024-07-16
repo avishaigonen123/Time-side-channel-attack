@@ -106,7 +106,7 @@ class EllipticCurve:
         P = self.G
         i = 2
         while P!=self.InfPoint:
-            P = P.addPoint(self.G)
+            P = self.addPoint(P, self.G)
             i += 1
         return i-1
 
