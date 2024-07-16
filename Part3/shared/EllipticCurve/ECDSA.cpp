@@ -42,17 +42,16 @@ ECDSA::~ECDSA() {
 }
 
 ECDSA_keypair_t ECDSA::make_keypair() {
-    ECDSA_keypair_t keys;
-    randomSeed(analogRead(0));
-    keys.privKey = random(1, n-1);
-    keys.Q = curve->scalarMultiplication(G, keys.privKey);
 
-    // Serial.print("Private Key: ");
-    // Serial.println(keys.privKey);
-    // Serial.print("Public Point: ");
-    // printPoint(keys.Q);
-    // Serial.print("order: ");
-    // Serial.println(n);
+    randomSeed(analogRead(0));
+    return make_keypair(random(1, n-1));
+}
+
+ECDSA_keypair_t ECDSA::make_keypair(uint32_t priv)
+{
+    ECDSA_keypair_t keys;
+    keys.privKey = priv;
+    keys.Q = curve->scalarMultiplication(G, keys.privKey);
     return keys;
 }
 
@@ -111,3 +110,5 @@ bool ECDSA::verify(Point Q, ECDSA_sig_t sig, uint32_t hash) {
 
     return rPrime == sig.r;
 }
+
+

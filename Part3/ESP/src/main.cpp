@@ -1,54 +1,88 @@
 #include <Arduino.h>
 #include <math.h>
-#include "shared/EllipticCurve/Point.h"
+#include "shared/EllipticCurve/ECDSA.h"
+#include "shared/EllipticCurve/Protocol.h"
 
 HardwareSerial& SerialArduino = Serial2;
 
-// clean the garbage
-void flush(Stream& stream){
-    byte* garbeg = new byte[stream.available()];
-    stream.readBytes(garbeg, stream.available());
-    delete[] garbeg;
-    garbeg = nullptr;
-}
+void sendSig(uint32_t r, uint32_t s, uint64_t time);
+void sendSigRequest(uint32_t hash);
+void printSigReading(ECDSA_sig_t sig, uint64_t time, Stream &serial);
+void sendPubRequest();
+void flush(Stream &serial);
 
-void sendToMaster(uint32_t r, uint32_t s, uint64_t time)
-{
-    Serial.printf("%" PRIu32 " %" PRIu32 " %" PRIu64 "\n", r, s, time);
-}
+uint32_t hash = 1234;
 
 void setup(){
     SerialArduino.begin(115200);
     Serial.begin(115200);
 }
 
+Point PubKey;
+bool isThrePubKey = false;
+
 void loop(){
-    if(Serial.available() && Serial.read() == 'S'){
-        // it receives ack from the server (PC)
+    if (Serial.available()){
+        switch (Serial.read())
+        {
+        case 'S':
+        {
+            sendSigRequest(hash);
+            
+            uint64_t lastTime = millis();
+            while(!SerialArduino.available());
+            lastTime = millis() - lastTime;
 
-        // send start to the arduino
-        uint64_t lastTime = millis();
-        
-        SerialArduino.write('S');
-        
-        // cleanup for next iteration
-        flush(SerialArduino);
-        
-        // check how much time it takes to calculate the new point
-        while(!SerialArduino.available());
-        
-        // send the point to the arduino
-        lastTime = millis() - lastTime;
-        
-        uint32_t r = SerialArduino.parseInt();
-        SerialArduino.read(); // dump the space
-        uint32_t s = SerialArduino.parseInt();
-		SerialArduino.read(); // dump the newline
+            ECDSA_sig_t sig;
+            if (parseSignature(SerialArduino, &sig))
+                printSigReading(sig, lastTime, Serial);
+            else{
+                flush(SerialArduino);
+            }
+            break;
+        }
+        case 'P':
+            sendPubRequest();
 
-        // send to PC the signature and the time it took to be calculated
-        sendToMaster(r, s, lastTime);
-
-        flush(SerialArduino);
-        flush(Serial);
+            while(!SerialArduino.available());
+            if (!isThrePubKey){
+                if (parsePubKey(SerialArduino, &PubKey))
+                    printPubKey(PubKey, Serial);
+                else{
+                    flush(SerialArduino);
+                }
+            }
+            else
+                printPubKey(PubKey, Serial);
+            break;
+        default:
+            break;
+        }
     }
+}
+
+void printSigReading(ECDSA_sig_t sig, uint64_t time, Stream &serial) {
+    serial.print("SIG<");
+    serial.print(sig.r);
+    serial.write(',');
+    serial.print(sig.s);
+    serial.write(',');
+    serial.print(time);
+    serial.write('>');
+}
+
+void sendSigRequest(uint32_t hash){
+    SerialArduino.write('S');
+    SerialArduino.print(hash);
+    SerialArduino.write(';');
+}
+
+void sendPubRequest(){
+    SerialArduino.write('P');
+}
+
+// dump garbage
+void flush(Stream &serial){
+    while(serial.available())
+        serial.read();
 }
