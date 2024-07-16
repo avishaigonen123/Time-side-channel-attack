@@ -3,6 +3,10 @@ import serial
 import datetime
 
 
+####
+# TODO: look at this file, remove unneccasry staff, change func name, etc
+####
+
 # just so we can manage files more easily
 key = "0x89"
 isItRegular = "S"
@@ -24,21 +28,6 @@ def sendMessage(message, ser):
     ans1 = ser.readline().decode()
     ans = ans1.strip()
     return ans
-
-'''
-def generateEllipticCurvePoints(a, b, n, lim):
-    # Precompute y^2 % n
-    y_squares = {((y*y) % n): y for y in range(n)}
-    
-    res = []
-    for x in range(n):
-        temp = (x**3 + x*a + b) % n
-        if temp in y_squares:
-            res.append((x, y_squares[temp]))
-            if len(res) == lim:
-                return res
-    return res
-'''
 
 def signMessages(file, ser):
     print("Sending messages...")
