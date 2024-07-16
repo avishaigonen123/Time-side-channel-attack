@@ -12,7 +12,7 @@ uint32_t hash = 1234;
 
 // Debugging helper to print signature
 void printSignature(ECDSA_sig_t sig, Stream &serial) {
-    serial.print(sig.r);
+    serial.print(sig.r);    
     serial.print(" ");
     serial.println(sig.s);
 }
@@ -33,8 +33,11 @@ void setup(){
 
 void loop(){
     if(SerialESP32.available() && SerialESP32.read() == 'S'){
+
         ECDSA_sig_t sig = ecdsa.sign(privKey, hash);
-        printSignature(sig, SerialESP32);
+        printSignature(sig, SerialESP32); 
+        printSignature(sig, Serial);
+
         // printSignature(sig, Serial);
         // dump the rest
         flush(SerialESP32);
