@@ -18,35 +18,66 @@ def timeStr():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
 def sendMessage(message, ser):
-<<<<<<< HEAD
-    ser.write((f"S").encode())
-=======
-    ser.write(("S").encode())
-    time.sleep(0.001)
->>>>>>> a4cf2c1a625dcf3d0309c9e191bf883ca3fc59a4
-    while ser.in_waiting == 0:
-        time.sleep(0.000001)  # Small delay to avoid busy-waiting
-    ans = ser.readline().decode()
-    return ans
+    ser.write((f"S{N};").encode())
 
 def signMessages(file, ser):
     print("Sending messages...")
-    for _ in range(N):
-        content = sendMessage(message, ser) 
-<<<<<<< HEAD
-        r, s, time = content.split(" ")
-=======
-        r, s, time = content.strip().split(" ")
-        print(f"{r} {s} {time}")
->>>>>>> a4cf2c1a625dcf3d0309c9e191bf883ca3fc59a4
-        file.write(f"{r} {s} {time}\n") # write to the file the results
+    sendMessage(message, ser)
+    numOfSigs = 0
+    line = ""
+    while True:
+        c = ser.read(1)
+        if c:
+            line += c.decode()
+            if line[-1:] == ";":
+                break
+        else:
+            break
+        if c.decode() == "S":
+            numOfSigs+=1
+            print(f"{numOfSigs} / {N}")
+    sigDict = {}
+    for sig in line[:-1].split("SIG")[1:]:
+        r, s, time = sig[1:-1].split(",")
+        if (r, s) not in sigDict:
+            sigDict[(r, s)] = [time]
+        else:
+            sigDict[(r, s)] += [time]
+    
+    for rs, timeArray in sigDict.items():
+        t = 0
+        for time in timeArray:
+            t += int(time)
+        sigDict[rs] = t / len(timeArray)
+
+    sorted_sigDict = dict(sorted(sigDict.items(), key=lambda item: item[1]))
+    for rs, time in sorted_sigDict.items():
+        file.write(f"{rs[0]} {rs[1]} {time:.3f}\n")
+
+def getPubKey(file, ser):
+    ser.write(("P").encode())
+    time.sleep(0.001)
+    line = ""
+    while True:
+        c = ser.read(1)
+        if c:
+            line += c.decode()
+            if line[-1:] == ";":
+                break
+        else:
+            break
+    c = ser.read(1)
+    x, y = line[4:-2].split(",")
+    file.write(f"public_key: {x} {y}\n")
+
 
 
 def main():
     # Open a serial port
+    ser = None
     try:
         ser = serial.Serial(
-            port='COM6',  # Replace with your port name
+            port='COM5',  # Replace with your port name
             baudrate=115200,
             timeout=1
         )
@@ -60,6 +91,7 @@ def main():
 
         # Open file for writing
         with open(f"data/{a}_{b}_{p}_{key}.txt", "w") as file:
+            getPubKey(file, ser)
             file.write("r  |  s  |  time[ms]\n")
             # Send messages and write response to file
             signMessages(file, ser)
@@ -70,7 +102,7 @@ def main():
     except Exception as e:
         print(f"An error occurred: {e}")
     finally:
-        if ser.is_open:
+        if ser and ser.is_open:
             ser.close()
             print("Serial port closed.")
 

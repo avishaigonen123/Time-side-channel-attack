@@ -29,7 +29,7 @@ void loop(){
         {
             uint32_t numOfSig = Serial.parseInt();
             Serial.read();
-            for (size_t i = 0; i < 1000; i++)
+            for (size_t i = 0; i < numOfSig; i++)
             {
                 uint64_t lastTime = 0;
                 do
@@ -48,7 +48,7 @@ void loop(){
                     log_e("Failed to parseSig");
                 }
             }
-            log_i("Finished %u sig", numOfSig);
+            Serial.write(';');
             break;
         }
         case 'P':
@@ -56,12 +56,14 @@ void loop(){
             if (!isThrePubKey){
                 if (parsePubKey(SerialArduino, &PubKey)){
                     printPubKey(PubKey, Serial);
+                    Serial.write(';');
                 } else {
                     flush(SerialArduino);
                 }
             }
             else
                 printPubKey(PubKey, Serial);
+                Serial.write(';');
             break;
         default:
             break;
