@@ -6,7 +6,7 @@ import re
 from datetime import datetime
 
 # TODO: change this number if nessacery
-d = 200   # Number of fastest signatures to consider
+d = 10   # Number of fastest signatures to consider
 
 # Elliptic curve parameters (example values, replace with actual parameters)
 p = 991
@@ -26,12 +26,12 @@ def collect_signatures():
     signatures = []
     public_key = None
 
-    path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/new_test_2_1.txt" 
+    path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/16_20_991_990.txt" 
     
     with open(path, 'r') as file:
         for line in file:
-            if line.startswith("public key: "):
-                line = line.removeprefix("public key: ")
+            if line.startswith("public_key: "):
+                line = line.removeprefix("public_key: ")
                 x, y = line.split(" ")
                 public_key = Point(int(x), int(y))
             elif line.startswith("r "):
@@ -40,7 +40,7 @@ def collect_signatures():
             else:
                 r, s, elapsed = line.split(" ")
                 signature = (int(r), int(s))
-                duration = int(elapsed)
+                duration = float(elapsed)
                 signatures.append((signature, duration))
                     
     return signatures, public_key
@@ -115,9 +115,23 @@ def attack():
     recovered_private_key = check_private_key(B, public_key)
 
     if recovered_private_key:
-        print(f"Private key recovered: {recovered_private_key}")
+        return f"Private key recovered: {recovered_private_key}"
     else:
-        print("Private key recovery unsuccessful.")
+        return False
+    #     print(f"Private key recovered: {recovered_private_key}")
+    # else:
+    #     print("Private key recovery unsuccessful.")
 
 
-attack()
+while True:
+    res = attack()
+    if res:
+        print(f"d = {d}")
+        print(res)
+        break
+    if not d %100:
+        print(f"d = {d}")
+    if d > 500:
+        print("Attack failed")
+        break
+    d+=5
