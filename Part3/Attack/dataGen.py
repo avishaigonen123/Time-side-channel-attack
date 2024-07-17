@@ -4,15 +4,18 @@ import datetime
 
 # just so we can manage files more easily
 key = "0xBA"
-message = "Hello world!"
-# TODO: remove this, this shouldn't exist
-hash = 1234
-N = 1000 # number of messages to send
-
-# Function to generate points and write to file
 a = 2
 b = 3
 p = 193939
+
+# TODO: remove this, this shouldn't exist
+hash = 1234
+
+
+N = 1000 # number of messages to send
+
+# Function to generate points and write to file
+
 
 def timeStr():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
