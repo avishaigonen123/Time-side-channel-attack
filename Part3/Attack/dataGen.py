@@ -3,10 +3,10 @@ import serial
 import datetime
 
 # just so we can manage files more easily
-key = "0xBA"
-a = 2
-b = 3
-p = 193939
+key = "990"
+a = 16
+b = 20
+p = 991
 
 # TODO: remove this, this shouldn't exist
 hash = 1234
@@ -20,12 +20,12 @@ N = 1000 # number of messages to send
 def timeStr():
     return datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
 
-def sendMessage(message, ser):
+def sendMessage(ser):
     ser.write((f"S{N};").encode())
 
 def signMessages(file, ser):
     print("Sending messages...")
-    sendMessage(message, ser)
+    sendMessage(ser)
     numOfSigs = 0
     line = ""
     while True:

@@ -9,7 +9,7 @@ ECDSA ecdsa;
 
 void flush(Stream &serial);
 
-uint32_t privKey = 0x69;
+uint32_t privKey = 990;
 ECDSA_keypair_t keys;
 
 void setup(){
