@@ -2,11 +2,6 @@ import time
 import serial
 import datetime
 
-
-####
-# TODO: look at this file, remove unneccasry staff, change func name, etc
-####
-
 # just so we can manage files more easily
 key = "0xBA"
 message = "Hello world!"
