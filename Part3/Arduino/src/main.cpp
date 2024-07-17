@@ -29,7 +29,7 @@ void loop(){
                 if (hash){
                     printSignature(ecdsa.sign(keys.privKey, hash), SerialESP32);
                 } else {
-                    SerialESP32.print("I");
+                    SerialESP32.write('I');
                 }
                 break;
             }

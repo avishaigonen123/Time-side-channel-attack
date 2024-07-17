@@ -27,28 +27,36 @@ void loop(){
         {
         case 'S':
         {
-            sendSigRequest(hash);
-            
-            uint64_t lastTime = millis();
-            while(!SerialArduino.available());
-            lastTime = millis() - lastTime;
+            uint32_t numOfSig = Serial.parseInt();
+            Serial.read();
+            for (size_t i = 0; i < 1000; i++)
+            {
+                uint64_t lastTime = 0;
+                do
+                {
+                    while(!SerialArduino.availableForWrite());
+                    sendSigRequest(hash);
+                    lastTime = millis();
+                } while (!wait(SerialArduino, 100) || SerialArduino.peek() == 'I');
+                lastTime = millis() - lastTime;
 
-            ECDSA_sig_t sig;
-            if (parseSignature(SerialArduino, &sig))
-                printSigReading(sig, lastTime, Serial);
-            else{
-                flush(SerialArduino);
+                ECDSA_sig_t sig;
+                if (parseSignature(SerialArduino, &sig))
+                    printSigReading(sig, lastTime, Serial);
+                else{
+                    flush(SerialArduino);
+                    log_e("Failed to parseSig");
+                }
             }
+            log_i("Finished %u sig", numOfSig);
             break;
         }
         case 'P':
             sendPubRequest();
-
-            while(!SerialArduino.available());
             if (!isThrePubKey){
-                if (parsePubKey(SerialArduino, &PubKey))
+                if (parsePubKey(SerialArduino, &PubKey)){
                     printPubKey(PubKey, Serial);
-                else{
+                } else {
                     flush(SerialArduino);
                 }
             }
@@ -72,12 +80,14 @@ void printSigReading(ECDSA_sig_t sig, uint64_t time, Stream &serial) {
 }
 
 void sendSigRequest(uint32_t hash){
+    while(!SerialArduino.availableForWrite());
     SerialArduino.write('S');
     SerialArduino.print(hash);
     SerialArduino.write(';');
 }
 
 void sendPubRequest(){
+    while(!SerialArduino.availableForWrite());
     SerialArduino.write('P');
 }
 

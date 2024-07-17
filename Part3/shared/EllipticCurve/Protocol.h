@@ -1,6 +1,16 @@
 #pragma once
 #include "ECDSA.h"
 
+bool inline wait(Stream &serial, unsigned int timeout){
+    int t = millis();
+    while(!serial.available()){
+        if(millis() - t > timeout){
+            return false;
+        }
+    }
+    return true;
+}
+
 // Debugging helper to print signature
 void inline printSignature(ECDSA_sig_t sig, Stream &serial) {
     serial.print("SIG<");
@@ -23,7 +33,8 @@ bool inline parseSignature(Stream & stream, ECDSA_sig_t* sig){
     char prefix[] = "SIG<";
     
     for (uint8_t index = 0; index < sizeof(prefix) - 1; index++) {
-        while(!Serial.available());
+        if(!wait(stream, 20))
+            return false;
         uint8_t c = stream.read();
         if (c != prefix[index]) {
             Serial.print("Expected: ");
@@ -37,13 +48,15 @@ bool inline parseSignature(Stream & stream, ECDSA_sig_t* sig){
     ECDSA_sig_t tempSig;
     tempSig.r = stream.parseInt();
 
-    while(!Serial.available());
+    if(!wait(stream, 20))
+        return false;
 
     if (stream.read() != ',')
         return false;
     tempSig.s = stream.parseInt();
 
-    while(!Serial.available());
+    if(!wait(stream, 20))
+        return false;
 
     if (stream.read() != '>')
         return false;
@@ -56,7 +69,7 @@ bool inline parsePubKey(Stream & stream, Point* pub){
     char prefix[] = "PUB<";
     
     for (uint8_t index = 0; index < sizeof(prefix) - 1; index++) {
-        while(!Serial.available());
+        wait(stream, 20);
         uint8_t c = stream.read();
         if (c != prefix[index]) {
             Serial.print("Expected: ");
@@ -70,14 +83,14 @@ bool inline parsePubKey(Stream & stream, Point* pub){
     Point tempPub;
     tempPub.x = stream.parseInt();
 
-    while(!Serial.available());
+    wait(stream, 20);
 
     if (stream.read() != ',')
         return false;
 
     tempPub.y = stream.parseInt();
 
-    while(!Serial.available());
+    wait(stream, 20);
 
     if (stream.read() != '>')
         return false;
@@ -89,7 +102,7 @@ bool inline parsePubKey(Stream & stream, Point* pub){
 bool inline parseVerify(Stream &stream, ECDSA_sig_t* sig, uint32_t* hash) {
     const char prefix[] = "VER<";
     for (uint8_t index = 0; index < sizeof(prefix) - 1; index++) {
-        while(!Serial.available());
+        wait(stream, 20);
         uint8_t c = stream.read();
         if (c != prefix[index]) {
             Serial.print("Expected: ");
@@ -102,22 +115,23 @@ bool inline parseVerify(Stream &stream, ECDSA_sig_t* sig, uint32_t* hash) {
     
     ECDSA_sig_t _sig;
     if (!parseSignature(stream, &_sig)) {
-        Serial.println("Failed to parse signature");
+        stream.println("Failed to parse signature");
         return false;
     }
 
-    while(!Serial.available());
+    wait(stream, 20);
 
     if (stream.read() != ',') {
-        Serial.println("Expected comma");
+        stream.println("Expected comma");
         return false;
     }
 
-    while(!Serial.available());
-    
     uint32_t _hash = stream.parseInt();
+    
+    wait(stream, 20);
+    
     if (stream.read() != '>') {
-        Serial.println("Expected closing bracket");
+        stream.println("Expected closing bracket");
         return false;
     }
     *sig = _sig;
