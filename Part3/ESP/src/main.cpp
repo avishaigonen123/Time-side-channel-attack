@@ -19,16 +19,17 @@ void setup(){
 }
 
 Point PubKey;
-bool isThrePubKey = false;
+bool ThereIsAPubKey = false;
 
 void loop(){
     if (Serial.available()){
         switch (Serial.read())
         {
+        // S1000; 
         case 'S':
         {
             uint32_t numOfSig = Serial.parseInt();
-            Serial.read();
+            Serial.read(); // for dumping the ;
             for (size_t i = 0; i < numOfSig; i++)
             {
                 uint64_t lastTime = 0;
@@ -53,7 +54,7 @@ void loop(){
         }
         case 'P':
             sendPubRequest();
-            if (!isThrePubKey){
+            if (!ThereIsAPubKey){
                 if (parsePubKey(SerialArduino, &PubKey)){
                     printPubKey(PubKey, Serial);
                     Serial.write(';');

@@ -1,6 +1,7 @@
 #pragma once
 #include "ECDSA.h"
 
+// function that gets timeout, and wait for serial to be aviliable for a period of this timeout
 bool inline wait(Stream &serial, unsigned int timeout){
     int t = millis();
     while(!serial.available()){
@@ -11,7 +12,7 @@ bool inline wait(Stream &serial, unsigned int timeout){
     return true;
 }
 
-// Debugging helper to print signature
+// Sent to Serial the signature
 void inline printSignature(ECDSA_sig_t sig, Stream &serial) {
     serial.print("SIG<");
     serial.print(sig.r);
@@ -20,6 +21,7 @@ void inline printSignature(ECDSA_sig_t sig, Stream &serial) {
     serial.write('>');
 }
 
+// sent to Serial the public key
 void inline printPubKey(Point pub, Stream &serial) {
     serial.print("PUB<");
     serial.print(pub.x);
@@ -28,7 +30,8 @@ void inline printPubKey(Point pub, Stream &serial) {
     serial.write('>');
 }
 
-// <SIG|273|1024>
+// function that gets signature from serial and parse it into other format
+// SIG<273,1024>
 bool inline parseSignature(Stream & stream, ECDSA_sig_t* sig){
     char prefix[] = "SIG<";
     
@@ -65,6 +68,7 @@ bool inline parseSignature(Stream & stream, ECDSA_sig_t* sig){
     return true;
 }
 
+// PUB<x,y>
 bool inline parsePubKey(Stream & stream, Point* pub){
     char prefix[] = "PUB<";
     
@@ -99,12 +103,14 @@ bool inline parsePubKey(Stream & stream, Point* pub){
     return true;
 }
 
+// VER<SIG<r,s>,hash>
 bool inline parseVerify(Stream &stream, ECDSA_sig_t* sig, uint32_t* hash) {
     const char prefix[] = "VER<";
     for (uint8_t index = 0; index < sizeof(prefix) - 1; index++) {
         wait(stream, 20);
         uint8_t c = stream.read();
         if (c != prefix[index]) {
+            // printing for debug
             Serial.print("Expected: ");
             Serial.println(prefix[index]);
             Serial.print("Read: ");

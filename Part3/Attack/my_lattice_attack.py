@@ -17,16 +17,15 @@ G = Point(589, 52)
 
 curve = EllipticCurve(a, b, p, G)
 
-hash_to_change = 1234
+hash_of_test_message = 1234
 
 # Collect N signatures and measure their signing durations
-# TODO: fix this function to, to check whether it is working
-# TODO: delete this function and write again, this is not a good name
 def collect_signatures():
     signatures = []
     public_key = None
 
-    path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/16_20_991_990.txt" 
+    path = input("give me path to your data file: ")
+    # path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/16_20_991_990.txt" 
     
     with open(path, 'r') as file:
         for line in file:
@@ -57,7 +56,7 @@ def geom_bound(index, num_of_signatures):
         return i
 
 
-# TODO: understand what is going on, check if it working
+# build svp lattice based on our d equtions, do reduction to another solvable problem
 def build_svp_lattice(signatures, curve):
     """Build the basis matrix for the SVP lattice using `signatures`."""
     dim = len(signatures)
@@ -69,7 +68,7 @@ def build_svp_lattice(signatures, curve):
         ri = signatures[i][0][0]  # ri
         si = signatures[i][0][1]  # si
         ti = (curve.modularInverse(si, n) * ri) % n  # ti
-        ui = -((curve.modularInverse(si, n) * hash_to_change) % n)  # ui
+        ui = -((curve.modularInverse(si, n) * hash_of_test_message) % n)  # ui
 
         B[i, i] = (2 ** li) * n  # (2^li)*n
         B[dim, i] = (2 ** li) * ti  # (2^li) * ti
@@ -110,6 +109,7 @@ def attack():
     B = build_svp_lattice(fastest_signatures, curve)
 
     # Perform LLL reduction on the lattice matrix B
+    # magic stuff here 
     LLL.reduction(B)
 
     recovered_private_key = check_private_key(B, public_key)
