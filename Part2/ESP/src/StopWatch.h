@@ -10,10 +10,10 @@ namespace StopWatch{
         fastTimer = timerBegin(0, 2, true); // Use timer 0, prescaler 1 (4.17ns per tick), count up
     }
 
-        // ISR for FAIL_PIN
+    // ISR for FAIL_PIN
     void IRAM_ATTR stopTimer() {
         if (measure) {
-            endTime = timerRead(fastTimer);// + timerRead(slowTimer);
+            endTime = timerRead(fastTimer);
             measure = false;
         }
     }
@@ -21,7 +21,6 @@ namespace StopWatch{
     void IRAM_ATTR startTimer() {
         if (!measure) {
             timerWrite(fastTimer, 0); // Reset the timer
-            //timerWrite(slowTimer, 0); // Reset the timer
             measure = true;
         }
     }

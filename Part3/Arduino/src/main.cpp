@@ -5,11 +5,12 @@
 
 // start the software serial, for communication with the ESP32
 SoftwareSerial SerialESP32(6,7);
-ECDSA ecdsa;
+EllipticCurve curve = EllipticCurve(7, 6, 5003);
+ECDSA ecdsa(&curve, Point(601, 29));
 
 void flush(Stream &serial);
 
-uint32_t privKey = 990;
+uint32_t privKey = 0x1234;
 ECDSA_keypair_t keys;
 
 void setup(){
