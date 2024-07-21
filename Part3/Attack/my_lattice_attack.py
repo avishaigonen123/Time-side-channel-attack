@@ -20,27 +20,26 @@ curve = EllipticCurve(a, b, p, G)
 hash_of_test_message = 1234
 
 # Collect N signatures and measure their signing durations
-def collect_signatures():
+def collect_signatures(path):
     signatures = []
     public_key = None
 
-    path = input("give me path to your data file: ")
     # path = "/home/agonen/Time-side-channel-attack/Part3/Attack/data/16_20_991_990.txt" 
     
     with open(path, 'r') as file:
-        for line in file:
-            if line.startswith("public_key: "):
-                line = line.removeprefix("public_key: ")
-                x, y = line.split(" ")
-                public_key = Point(int(x), int(y))
-            elif line.startswith("r "):
-                public_key = Point(596, 141) # real public key
-                continue 
-            else:
-                r, s, elapsed = line.split(" ")
-                signature = (int(r), int(s))
-                duration = float(elapsed)
-                signatures.append((signature, duration))
+        line = file.readline()
+        if line.startswith("public_key: "):
+            x, y = line.split(" ")[1:]
+            print("public key: " + x + " " + y)
+            public_key = Point(int(x), int(y))
+        else:
+            public_key = Point(596, 141) # real public key
+            # print("public key: defalte")
+        for line in file.readlines()[1:]:
+            r, s, elapsed = line.split(" ")
+            signature = (int(r), int(s))
+            duration = int(elapsed)
+            signatures.append((signature,duration))
                     
     return signatures, public_key
 
@@ -91,8 +90,8 @@ def check_private_key(B, public_key):
 
 # the attack itself.
 # TODO: give more convient name, divide to files
-def attack():
-    RawSignatures, public_key = collect_signatures()
+def attack(path):
+    RawSignatures, public_key = collect_signatures(path)
 
     signatures = []    
     found = {}
@@ -122,9 +121,11 @@ def attack():
     # else:
     #     print("Private key recovery unsuccessful.")
 
+path = input("give me path to your data file: ")
 
+# we will try to do the attack for a lot of d's
 while True:
-    res = attack()
+    res = attack(path)
     if res:
         print(f"d = {d}")
         print(res)
