@@ -2,12 +2,12 @@ import time
 import serial
 
 # just so we can manage files more easily
-key = "990"
-a = 16
-b = 20
-p = 991
+key = "0x1234"
+a = 7
+b = 6
+p = 5003
 
-N = 1000 # number of messages to send
+N = 2000 # number of messages to send
 
 # Function to generate points and write to file
 def sendMessage(ser):
@@ -72,7 +72,7 @@ def main():
     ser = None
     try:
         ser = serial.Serial(
-            port='COM5',  # Replace with your port name
+            port='COM3',  # Replace with your port name
             baudrate=115200,
             timeout=1
         )
