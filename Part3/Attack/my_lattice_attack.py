@@ -1,6 +1,6 @@
 from fpylll import IntegerMatrix, LLL 
 from time import time
-from elliptic_curve import EllipticCurve, Point  
+from elliptic_curve_imp import EllipticCurve, Point  
 import os
 import re
 from datetime import datetime
