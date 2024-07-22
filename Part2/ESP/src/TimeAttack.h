@@ -5,11 +5,11 @@
 #include "touchHandle.h"
 #include "StopWatch.h"
 
+#define PASS_SIZE 4 // here, change the PASS_SIZE 
 #define FAIL_PIN GPIO_NUM_27
 #define FAIL_PIN2 12
 #define SUCCESS_PIN 14
 #define NUM_OF_ATTEMPTS_FOR_DIGIT 20
-#define PASS_SIZE 4
 
 namespace TSCA {
     typedef enum {NOTHING, FINISHED_BATCH, SUCCESS, FAIL, INC, FOUND_I2C} EventType_t;

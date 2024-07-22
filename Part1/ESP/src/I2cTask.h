@@ -1,52 +1,49 @@
+#pragma once
 #include <Arduino.h>
 #include <Wire.h>
 #include "touchHandle.h"
+#include "TimeAttack.h"
+#include "StopWatch.h"
 
-namespace I2CTask{
-    typedef struct I2CTaskArgs{
-        uint8_t sup;
-    } I2CTaskArgs;
+namespace I2CTask {
+    volatile uint8_t rBuffer[4];
 
     void onRec_Callback(int numOfBytes){
         for(uint8_t i = 0 ; Wire.available() ; i++){
-            Touch::data[i] = Wire.read();
+            rBuffer[i] = Wire.read();
         }
     }
 
     void onReq_Callback(){
-        if(Touch::data[0] == 0x5E){
+        if(rBuffer[0] == 0x5E){
             Wire.write(0x24);
         }
-        else if(Touch::data[0] == 0x5D){
+        else if(rBuffer[0] == 0x5D){
             Wire.write(0x0);
         }
-        else if(Touch::data[0] == 0x00){
+        else if(rBuffer[0] == 0x00){
             Wire.write((uint8_t)Touch::state);
             Wire.write(Touch::state >> 8);
             if(Touch::state == ENTER_BUTTON){
-                startTimer();
+                StopWatch::startTimer();
             }
         }
-        Touch::data[0] = 0xFF;
+        rBuffer[0] = 0xFF;
     }
 
-    void i2cTask(void* arg) {
-
-        I2CTaskArgs* i2cArgs = (I2CTaskArgs*)arg;
-
+    void i2cTask(void *parameter) {
+        memset((void*)rBuffer, 0xFF, sizeof(rBuffer));
+        
         while(!Wire.begin(0x5A, SDA, SCL, 400000)){delay(10);}
-
-        for (uint8_t i = 0; i < 4; i++){
-            Touch::data[i] = 0xFF;
-        }
-
         Wire.onReceive(onRec_Callback);
         Wire.onRequest(onReq_Callback);
 
-        TSCA::eventState = FOUND_I2C;
-        xTaskNotifyGive(tftTaskHandle);
-        xTaskNotifyGive(TSCATaskHandle);
+        TSCA::eventState = TSCA::FOUND_I2C;
+        
+        xTaskNotifyGive(xTaskGetHandle("TSCA"));
+        log_d("notified TSCA");
 
         vTaskDelete(NULL);
     }
+
 }

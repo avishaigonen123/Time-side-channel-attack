@@ -5,7 +5,6 @@ import os
 import re
 from datetime import datetime
 
-# TODO: change this number if nessacery
 d = 10   # Number of fastest signatures to consider
 
 # Elliptic curve parameters (example values, replace with actual parameters)
@@ -13,7 +12,6 @@ p = 991
 a = 16
 b = 20
 G = Point(589, 52)
-
 
 curve = EllipticCurve(a, b, p, G)
 

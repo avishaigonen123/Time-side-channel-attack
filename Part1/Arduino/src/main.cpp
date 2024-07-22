@@ -6,7 +6,7 @@
 #ifndef _BV
 #define _BV(bit) (1 << (bit)) 
 #endif
-#define PASS_SIZE 4
+#define PASS_SIZE 8 // here, change the pass size
 #define MAX_PASS_SIZE 20
 #define RED_LED 12
 #define GREEN_LED 13
@@ -18,6 +18,8 @@
 #define ENTER_BUTTON 0x100
 #define INITIALIZE_VALUE 0x909
 
+uint8_t password[PASS_SIZE]={1,2,3,4,5,6,7,8}; // the secret password, here, change the password
+
 // You can have up to 4 on one i2c bus but one is enough for testing!
 Adafruit_MPR121 cap = Adafruit_MPR121();
 
@@ -28,7 +30,6 @@ const uint8_t real_to_fake_keypad[12] = {0xFF,7,4,1,0,8,5,2,0xFF,9,6,3}; // map 
 uint16_t last_touched = 0;
 uint16_t curr_touched = 0;
 
-uint8_t password[PASS_SIZE]={7,9,5,8}; // the secret password
 uint8_t curr_pass[MAX_PASS_SIZE]; // our current password
 
 uint8_t counter = 0; // the counter of where are we now

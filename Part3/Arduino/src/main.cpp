@@ -3,14 +3,17 @@
 #include "shared/EllipticCurve/ECDSA.h"
 #include "shared/EllipticCurve/Protocol.h"
 
+uint32_t a = 7, b = 6, p = 5003; // here, change. change the params for the curve 
+Point G = new Point(601,29) // here, change. this is the generator point
+uint32_t privKey = 0x1234; // here, change. this is the private key
+
 // start the software serial, for communication with the ESP32
 SoftwareSerial SerialESP32(6,7);
-EllipticCurve curve = EllipticCurve(7, 6, 5003);
-ECDSA ecdsa(&curve, Point(601, 29));
+EllipticCurve curve = EllipticCurve(a, b, p); 
+ECDSA ecdsa(&curve, G); 
 
 void flush(Stream &serial);
 
-uint32_t privKey = 0x1234;
 ECDSA_keypair_t keys;
 
 void setup(){
