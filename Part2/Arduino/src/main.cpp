@@ -6,7 +6,7 @@
 #ifndef _BV
 #define _BV(bit) (1 << (bit)) 
 #endif
-#define PASS_SIZE 8 // here, change the pass size
+#define PASS_SIZE 4 // here, change the pass size
 #define MAX_PASS_SIZE 20
 #define RED_LED 12
 #define GREEN_LED 13
@@ -18,7 +18,7 @@
 #define ENTER_BUTTON 0x100
 #define INITIALIZE_VALUE 0x909
 
-uint8_t password[PASS_SIZE]={1,2,3,4,5,6,7,8}; // the secret password, here, change the password
+uint8_t password[PASS_SIZE]={1,2,3,4}; // the secret password, here, change the password
 
 // You can have up to 4 on one i2c bus but one is enough for testing!
 Adafruit_MPR121 cap = Adafruit_MPR121();
@@ -45,7 +45,7 @@ void setup() {
   while (!Serial) { 
     delay(10);
   }
-  
+  randomSeed(analogRead(0));
   // Set up LED pins as output and initialize them to low
   pinMode(GREEN_LED, OUTPUT); // green LED
   pinMode(RED_LED, OUTPUT); // red LED
@@ -72,6 +72,7 @@ void setup() {
 bool check_pass()
 {
     for (int i = 0; i < PASS_SIZE; i++){ // this is the vulnerable part of the code
+        delay(random(10));
         if(curr_pass[i]!=password[i]) 
             return false;
     }
