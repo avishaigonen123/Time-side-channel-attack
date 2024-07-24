@@ -2,12 +2,12 @@ import time
 import serial
 
 # just so we can manage files more easily
-key = "0x1234"
-a = 7
-b = 6
-p = 5003
+key = "606"
+a = 16
+b = 20
+p = 991
 
-N = 2000 # number of messages to send
+N = 1000 # number of messages to send
 
 # Function to generate points and write to file
 def sendMessage(ser):
@@ -72,7 +72,7 @@ def main():
     ser = None
     try:
         ser = serial.Serial(
-            port='COM3',  # Replace with your port name
+            port='COM6',  # Replace with your port name
             baudrate=115200,
             timeout=1
         )
@@ -85,7 +85,10 @@ def main():
         print("done.")
 
         # Open file for writing
-        with open(f"data/{a}_{b}_{p}_{key}.txt", "w") as file:
+        path = r"C:\Users\avish\OneDrive\Documents\PlatformIO\Projects\Time side channel attack\Part3\Attack\data"
+        path += f"\\{a}_{b}_{p}_{key}.txt"
+
+        with open(path, "w") as file:
             getPubKey(file, ser)
             file.write("r  |  s  |  time[ms]\n")
             # Send messages and write response to file

@@ -18,7 +18,7 @@
 #define ENTER_BUTTON 0x100
 #define INITIALIZE_VALUE 0x909
 
-uint8_t password[PASS_SIZE]={1,2,3,4}; // the secret password, here, change the password
+uint8_t password[PASS_SIZE]={2,5,8,0}; // the secret password, here, change the password
 
 // You can have up to 4 on one i2c bus but one is enough for testing!
 Adafruit_MPR121 cap = Adafruit_MPR121();
