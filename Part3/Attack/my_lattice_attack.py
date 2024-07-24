@@ -41,7 +41,7 @@ def collect_signatures(path):
                     
     return signatures, public_key
 
-# TODO: consider whether to use it or not, becuase maybe i can only say li = 3
+# consider whether to use it or not, becuase maybe i can only say li = 3
 def geom_bound(index, num_of_signatures):
         """Estimate the number of leading zero bits at signature with `index`."""
         i = 1
