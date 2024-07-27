@@ -28,6 +28,8 @@ public:
     Point EllipticCurveCalcPoint(Point P, uint32_t PrivKey);
 
     uint32_t calcOrder(Point G);
+
+    bool isOnCurve(Point G);
 };
 
 #endif // ELLIPTIC_CURVE_H

@@ -78,10 +78,17 @@ byte EllipticCurve::key_length(uint32_t k)
     return 0;
 }
 
+// simple curve order algorithm
 uint32_t EllipticCurve::calcOrder(Point G)
 {
     Point P = G;
     uint32_t i = 2;
     for (; !(P == InfPoint); i++){ P = addPoint(G, P); }
     return i-1;
+}
+
+
+bool EllipticCurve::isOnCurve(Point G)
+{
+    return (G.y * G.y) % p == (G.x * G.x * G.x + a * G.x + b) % p;
 }

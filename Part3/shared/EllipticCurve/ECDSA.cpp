@@ -84,6 +84,8 @@ uint32_t ECDSA::hash(uint8_t* mes, uint32_t len) {
 }
 
 bool ECDSA::verify(Point Q, ECDSA_sig_t sig, uint32_t hash) {
+    if(!curve->isOnCurve(Q))
+        return false; // if Q is not on curve -> false
     uint32_t w = modularInverse(sig.s, n) % n;
     uint32_t u1 = (hash * w) % n;
     uint32_t u2 = (sig.r * w) % n;
@@ -92,23 +94,10 @@ bool ECDSA::verify(Point Q, ECDSA_sig_t sig, uint32_t hash) {
     Point R = curve->addPoint(temp1, temp2);
     uint32_t rPrime = R.x % n;
 
-    
-    // Serial.print("w: ");
-    // Serial.println(w);
-    // Serial.print("u1: ");
-    // Serial.println(u1);
-    // Serial.print("u2: ");
-    // Serial.println(u2);
-    // Serial.print("temp1: ");
-    // printPoint(temp1);
-    // Serial.print("temp2: ");
-    // printPoint(temp2);
-    // printPoint(R);
-    // Serial.print("r': ");
-    // Serial.println(rPrime);
-    
-
     return rPrime == sig.r;
 }
 
-
+bool ECDSA::verify(Point Q, ECDSA_sig_t sig, uint8_t *message, uint32_t len)
+{
+    return verify(Q, sig, hash(message, len));
+}
