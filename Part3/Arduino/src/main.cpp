@@ -3,9 +3,11 @@
 #include "shared/EllipticCurve/ECDSA.h"
 #include "shared/EllipticCurve/Protocol.h"
 
+uint32_t privKey = 0xBA; // here, change. this is the private key
+
 // start the software serial, for communication with the ESP32
 SoftwareSerial SerialESP32(6,7);
-ECDSA ecdsa;
+ECDSA ecdsa; 
 
 void flush(Stream &serial);
 
